@@ -29,7 +29,7 @@ export default function App() {
   const handleUpdateGoals = (newGoals) => setGoals({ ...saveGoals(newGoals) })
 
   const view = {
-    today: <TodayView entries={entries} goals={goals} onSave={handleSaveEntry} />,
+    today: <TodayView entries={entries} goals={goals} onSave={handleSaveEntry} onDelete={handleDeleteEntry} />,
     week: <WeeklyView entries={entries} goals={goals} />,
     month: <MonthlyView entries={entries} goals={goals} />,
     goals: <GoalsView goals={goals} onUpdate={handleUpdateGoals} entries={entries} />,

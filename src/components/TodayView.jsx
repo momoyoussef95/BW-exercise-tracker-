@@ -40,12 +40,13 @@ function StatRing({ label, value, goal, color, display }) {
   )
 }
 
-export default function TodayView({ entries, goals, onSave }) {
+export default function TodayView({ entries, goals, onSave, onDelete }) {
   const date = todayStr()
   const existing = entries[date]
   const [form, setForm] = useState({ pushups: 0, squats: 0, plank: 0 })
   const [saved, setSaved] = useState(false)
   const [toast, setToast] = useState('')
+  const [confirmDelete, setConfirmDelete] = useState(false)
 
   useEffect(() => {
     if (existing) {
@@ -102,8 +103,20 @@ export default function TodayView({ entries, goals, onSave }) {
         <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-5">
           <div className="flex justify-between items-center mb-4">
             <span className="font-semibold text-emerald-800">Today logged ✓</span>
-            <button onClick={() => setSaved(false)} className="text-sm text-emerald-600 underline underline-offset-2">Edit</button>
+            <div className="flex gap-3">
+              <button onClick={() => setSaved(false)} className="text-sm text-emerald-600 underline underline-offset-2">Edit</button>
+              <button onClick={() => setConfirmDelete(true)} className="text-sm text-red-400 underline underline-offset-2">Clear</button>
+            </div>
           </div>
+          {confirmDelete && (
+            <div className="mb-4 bg-red-50 rounded-xl p-3 flex items-center justify-between">
+              <p className="text-sm text-red-600">Remove today's entry?</p>
+              <div className="flex gap-2">
+                <button onClick={() => setConfirmDelete(false)} className="text-xs text-slate-500 px-2 py-1 rounded-lg hover:bg-slate-100">No</button>
+                <button onClick={() => { onDelete(date); setConfirmDelete(false) }} className="text-xs text-white bg-red-500 px-3 py-1 rounded-lg font-medium">Yes</button>
+              </div>
+            </div>
+          )}
           <div className="grid grid-cols-3 gap-3 text-center">
             <div>
               <p className="text-2xl font-bold text-emerald-700">{form.pushups}</p>
