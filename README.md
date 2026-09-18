@@ -1,1 +1,1 @@
-# BW-exercise-tracker-
+# EXERCISE-TRACKER-
