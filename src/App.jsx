@@ -1,46 +1,80 @@
 import { useState, useEffect } from 'react'
-import TodayView from './components/TodayView'
-import WeeklyView from './components/WeeklyView'
-import MonthlyView from './components/MonthlyView'
-import GoalsView from './components/GoalsView'
+import DashboardView from './components/DashboardView'
+import TodayLogView from './components/TodayLogView'
+import StatsView from './components/StatsView'
+import AchievementsView from './components/AchievementsView'
 import HistoryView from './components/HistoryView'
-import { getEntries, saveEntry, deleteEntry, getGoals, saveGoals } from './utils/storage'
+import {
+  getWorkouts, saveWorkout, deleteWorkout,
+  getBodyWeights, saveBodyWeight,
+  getSkips, saveSkip, deleteSkip,
+  isSeeded, markSeeded, bulkSaveWorkouts,
+} from './utils/storage'
+import { SEED_WORKOUTS, SEED_WEIGHT } from './utils/seedData'
 
 const TABS = [
-  { id: 'today', label: 'Today', icon: '🏋️' },
-  { id: 'week', label: 'Week', icon: '📅' },
-  { id: 'month', label: 'Month', icon: '📆' },
-  { id: 'goals', label: 'Goals', icon: '🎯' },
+  { id: 'home',    label: 'Home',    icon: '🏠' },
+  { id: 'log',     label: 'Log',     icon: '📝' },
+  { id: 'stats',   label: 'Stats',   icon: '📊' },
+  { id: 'wins',    label: 'Wins',    icon: '🏆' },
   { id: 'history', label: 'History', icon: '📋' },
 ]
 
 export default function App() {
-  const [tab, setTab] = useState('today')
-  const [entries, setEntries] = useState({})
-  const [goals, setGoals] = useState({})
+  const [tab, setTab] = useState('home')
+  const [workouts, setWorkouts] = useState([])
+  const [bodyWeights, setBodyWeights] = useState({})
+  const [skips, setSkips] = useState({})
 
   useEffect(() => {
-    setEntries(getEntries())
-    setGoals(getGoals())
+    if (!isSeeded()) {
+      bulkSaveWorkouts(SEED_WORKOUTS)
+      localStorage.setItem('et_weights', JSON.stringify(SEED_WEIGHT))
+      markSeeded()
+    }
+    setWorkouts(getWorkouts())
+    setBodyWeights(getBodyWeights())
+    setSkips(getSkips())
   }, [])
 
-  const handleSaveEntry = (date, entry) => setEntries({ ...saveEntry(date, entry) })
-  const handleDeleteEntry = (date) => setEntries({ ...deleteEntry(date) })
-  const handleUpdateGoals = (newGoals) => setGoals({ ...saveGoals(newGoals) })
+  const handleSaveWorkout = (workout) => setWorkouts([...saveWorkout(workout)])
+  const handleDeleteWorkout = (id) => setWorkouts([...deleteWorkout(id)])
+  const handleSaveWeight = (date, weight) => setBodyWeights({ ...saveBodyWeight(date, weight) })
+  const handleSaveSkip = (date, reason) => setSkips({ ...saveSkip(date, reason) })
+  const handleDeleteSkip = (date) => setSkips({ ...deleteSkip(date) })
 
   const view = {
-    today: <TodayView entries={entries} goals={goals} onSave={handleSaveEntry} onDelete={handleDeleteEntry} />,
-    week: <WeeklyView entries={entries} goals={goals} />,
-    month: <MonthlyView entries={entries} goals={goals} />,
-    goals: <GoalsView goals={goals} onUpdate={handleUpdateGoals} entries={entries} />,
-    history: <HistoryView entries={entries} onDelete={handleDeleteEntry} onEdit={handleSaveEntry} />,
+    home: (
+      <DashboardView workouts={workouts} bodyWeights={bodyWeights} />
+    ),
+    log: (
+      <TodayLogView
+        workouts={workouts}
+        bodyWeights={bodyWeights}
+        skips={skips}
+        onSaveWorkout={handleSaveWorkout}
+        onSaveWeight={handleSaveWeight}
+        onSaveSkip={handleSaveSkip}
+        onDeleteSkip={handleDeleteSkip}
+      />
+    ),
+    stats: <StatsView workouts={workouts} bodyWeights={bodyWeights} />,
+    wins: <AchievementsView workouts={workouts} />,
+    history: (
+      <HistoryView
+        workouts={workouts}
+        skips={skips}
+        onDelete={handleDeleteWorkout}
+        onSaveWorkout={handleSaveWorkout}
+      />
+    ),
   }
 
   return (
     <div className="min-h-screen bg-slate-50">
       <header className="bg-white border-b border-slate-100 px-5 py-3.5 flex items-center gap-2">
         <span className="text-2xl">💪</span>
-        <h1 className="text-lg font-bold text-slate-900">Body Weight Tracker</h1>
+        <h1 className="text-lg font-bold text-slate-900">Exercise Tracker</h1>
       </header>
 
       <main className="max-w-lg mx-auto px-4 py-6 pb-28">

@@ -1,39 +1,77 @@
-const ENTRIES_KEY = 'bwt_entries'
+const WORKOUTS_KEY = 'et_workouts'
+const WEIGHTS_KEY = 'et_weights'
+const SKIPS_KEY = 'et_skips'
+const SEEDED_KEY = 'et_seeded'
 const GOALS_KEY = 'bwt_goals'
 
-export const getEntries = () => {
+const parse = (key, fallback) => {
   try {
-    const data = localStorage.getItem(ENTRIES_KEY)
-    return data ? JSON.parse(data) : {}
+    const d = localStorage.getItem(key)
+    return d ? JSON.parse(d) : fallback
   } catch {
-    return {}
+    return fallback
   }
 }
 
-export const saveEntry = (date, entry) => {
-  const entries = getEntries()
-  entries[date] = { ...entry, updatedAt: new Date().toISOString() }
-  localStorage.setItem(ENTRIES_KEY, JSON.stringify(entries))
-  return entries
+export const getWorkouts = () => parse(WORKOUTS_KEY, [])
+
+export const saveWorkout = (workout) => {
+  const workouts = getWorkouts()
+  const idx = workouts.findIndex(w => w.id === workout.id)
+  if (idx >= 0) workouts[idx] = workout
+  else workouts.push(workout)
+  workouts.sort((a, b) => a.date.localeCompare(b.date))
+  localStorage.setItem(WORKOUTS_KEY, JSON.stringify(workouts))
+  return workouts
 }
 
-export const deleteEntry = (date) => {
-  const entries = getEntries()
-  delete entries[date]
-  localStorage.setItem(ENTRIES_KEY, JSON.stringify(entries))
-  return entries
+export const deleteWorkout = (id) => {
+  const workouts = getWorkouts().filter(w => w.id !== id)
+  localStorage.setItem(WORKOUTS_KEY, JSON.stringify(workouts))
+  return workouts
+}
+
+export const bulkSaveWorkouts = (workouts) => {
+  localStorage.setItem(WORKOUTS_KEY, JSON.stringify(workouts))
+}
+
+export const getBodyWeights = () => parse(WEIGHTS_KEY, {})
+
+export const saveBodyWeight = (date, weight) => {
+  const weights = getBodyWeights()
+  if (weight === null || weight === undefined) delete weights[date]
+  else weights[date] = weight
+  localStorage.setItem(WEIGHTS_KEY, JSON.stringify(weights))
+  return weights
+}
+
+export const getSkips = () => parse(SKIPS_KEY, {})
+
+export const saveSkip = (date, reason) => {
+  const skips = getSkips()
+  skips[date] = { reason, skippedAt: new Date().toISOString() }
+  localStorage.setItem(SKIPS_KEY, JSON.stringify(skips))
+  return skips
+}
+
+export const deleteSkip = (date) => {
+  const skips = getSkips()
+  delete skips[date]
+  localStorage.setItem(SKIPS_KEY, JSON.stringify(skips))
+  return skips
+}
+
+export const isSeeded = () => {
+  try { return localStorage.getItem(SEEDED_KEY) === 'true' } catch { return false }
+}
+
+export const markSeeded = () => {
+  try { localStorage.setItem(SEEDED_KEY, 'true') } catch {}
 }
 
 const DEFAULT_GOALS = { pushups: 50, squats: 50, plank: 60, history: [] }
 
-export const getGoals = () => {
-  try {
-    const data = localStorage.getItem(GOALS_KEY)
-    return data ? JSON.parse(data) : DEFAULT_GOALS
-  } catch {
-    return DEFAULT_GOALS
-  }
-}
+export const getGoals = () => parse(GOALS_KEY, DEFAULT_GOALS)
 
 export const saveGoals = (newGoals) => {
   const current = getGoals()
@@ -46,11 +84,7 @@ export const saveGoals = (newGoals) => {
       setAt: current.updatedAt || new Date().toISOString(),
     })
   }
-  const updated = {
-    ...newGoals,
-    updatedAt: new Date().toISOString(),
-    history: history.slice(-10),
-  }
+  const updated = { ...newGoals, updatedAt: new Date().toISOString(), history: history.slice(-10) }
   localStorage.setItem(GOALS_KEY, JSON.stringify(updated))
   return updated
 }
