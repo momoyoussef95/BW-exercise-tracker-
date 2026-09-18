@@ -8,6 +8,7 @@ import {
   getWorkouts, saveWorkout, deleteWorkout,
   getBodyWeights, saveBodyWeight,
   getSkips, saveSkip, deleteSkip,
+  getEntries, saveEntry, deleteEntry,
   isSeeded, markSeeded, bulkSaveWorkouts,
 } from './utils/storage'
 import { SEED_WORKOUTS, SEED_WEIGHT } from './utils/seedData'
@@ -25,6 +26,7 @@ export default function App() {
   const [workouts, setWorkouts] = useState([])
   const [bodyWeights, setBodyWeights] = useState({})
   const [skips, setSkips] = useState({})
+  const [entries, setEntries] = useState({})
 
   useEffect(() => {
     if (!isSeeded()) {
@@ -35,6 +37,7 @@ export default function App() {
     setWorkouts(getWorkouts())
     setBodyWeights(getBodyWeights())
     setSkips(getSkips())
+    setEntries(getEntries())
   }, [])
 
   const handleSaveWorkout = (workout) => setWorkouts([...saveWorkout(workout)])
@@ -42,20 +45,25 @@ export default function App() {
   const handleSaveWeight = (date, weight) => setBodyWeights({ ...saveBodyWeight(date, weight) })
   const handleSaveSkip = (date, reason) => setSkips({ ...saveSkip(date, reason) })
   const handleDeleteSkip = (date) => setSkips({ ...deleteSkip(date) })
+  const handleSaveEntry = (date, entry) => setEntries({ ...saveEntry(date, entry) })
+  const handleDeleteEntry = (date) => setEntries({ ...deleteEntry(date) })
 
   const view = {
     home: (
-      <DashboardView workouts={workouts} bodyWeights={bodyWeights} />
+      <DashboardView workouts={workouts} bodyWeights={bodyWeights} entries={entries} />
     ),
     log: (
       <TodayLogView
         workouts={workouts}
         bodyWeights={bodyWeights}
         skips={skips}
+        entries={entries}
         onSaveWorkout={handleSaveWorkout}
         onSaveWeight={handleSaveWeight}
         onSaveSkip={handleSaveSkip}
         onDeleteSkip={handleDeleteSkip}
+        onSaveEntry={handleSaveEntry}
+        onDeleteEntry={handleDeleteEntry}
       />
     ),
     stats: <StatsView workouts={workouts} bodyWeights={bodyWeights} />,

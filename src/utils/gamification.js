@@ -1,21 +1,21 @@
 export const LEVELS = [
-  { level: 1, name: 'Warming Up',       icon: '🌱', minXP: 0,     color: '#10b981' },
-  { level: 2, name: 'Building Base',     icon: '🔥', minXP: 1000,  color: '#f59e0b' },
-  { level: 3, name: 'Getting Consistent',icon: '⚡', minXP: 2500,  color: '#3b82f6' },
-  { level: 4, name: 'Dedicated',         icon: '💎', minXP: 5000,  color: '#8b5cf6' },
-  { level: 5, name: 'Athlete Mode',      icon: '🏆', minXP: 8000,  color: '#ec4899' },
-  { level: 6, name: 'Elite',             icon: '👑', minXP: 12000, color: '#f97316' },
-  { level: 7, name: 'Foundation Builder',icon: '🏛️', minXP: 16000, color: '#eab308' },
+  { level: 1, name: 'Just Starting',        icon: '🌱', minXP: 0,     color: '#10b981' },
+  { level: 2, name: 'Showing Up',           icon: '🔥', minXP: 800,   color: '#f59e0b' },
+  { level: 3, name: 'Building Habit',       icon: '⚡', minXP: 3000,  color: '#3b82f6' },
+  { level: 4, name: 'Getting Consistent',   icon: '💎', minXP: 8000,  color: '#8b5cf6' },
+  { level: 5, name: 'Locked In',            icon: '🏆', minXP: 15000, color: '#ec4899' },
+  { level: 6, name: 'Foundation Mode',      icon: '👑', minXP: 22000, color: '#f97316' },
+  { level: 7, name: 'Foundation Built',     icon: '🏛️', minXP: 30000, color: '#eab308' },
 ]
 
 export const MILESTONES = [
-  { day: 10,  label: 'First Milestone',        icon: '🎯' },
-  { day: 20,  label: '20 Strong',              icon: '💪' },
-  { day: 30,  label: 'One Month',              icon: '🗓️' },
-  { day: 42,  label: 'The Answer',             icon: '🌟' },
-  { day: 50,  label: 'Halfway to Foundation',  icon: '⭐' },
-  { day: 75,  label: 'Three Quarters',         icon: '🔥' },
-  { day: 100, label: 'Foundation Built',       icon: '🏛️' },
+  { day: 10,  label: 'First Milestone',       icon: '🎯' },
+  { day: 20,  label: '20 Strong',             icon: '💪' },
+  { day: 30,  label: 'One Month',             icon: '🗓️' },
+  { day: 42,  label: 'The Answer',            icon: '🌟' },
+  { day: 50,  label: 'Halfway to Foundation', icon: '⭐' },
+  { day: 75,  label: 'Three Quarters',        icon: '🔥' },
+  { day: 100, label: 'Foundation Built',      icon: '🏛️' },
 ]
 
 export const BADGES = [
@@ -70,11 +70,11 @@ export const getPrevMilestone = (dayCount) =>
 export const getEarnedBadges = (workouts) => {
   const ids = []
   const count = workouts.length
-  if (count >= 1) ids.push('first')
-  if (count >= 10) ids.push('day10')
-  if (count >= 20) ids.push('day20')
-  if (count >= 30) ids.push('day30')
-  if (count >= 50) ids.push('day50')
+  if (count >= 1)   ids.push('first')
+  if (count >= 10)  ids.push('day10')
+  if (count >= 20)  ids.push('day20')
+  if (count >= 30)  ids.push('day30')
+  if (count >= 50)  ids.push('day50')
   if (count >= 100) ids.push('day100')
   if (workouts.some(w => (w.duration || 0) >= 60)) ids.push('iron_hour')
   if (workouts.some(w => w.type === 'cardio' || w.notes?.toLowerCase().match(/run|jog/))) ids.push('runner')
@@ -131,8 +131,30 @@ export const getWeeklyStreak = (workouts) => {
   return streak
 }
 
+const dateKey = (d) => {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+export const getBWStreak = (entries) => {
+  const hasActivity = (d) => {
+    const e = entries[dateKey(d)]
+    return e && (e.pushups || e.squats || e.plank)
+  }
+  let streak = 0
+  const check = new Date()
+  if (!hasActivity(check)) check.setDate(check.getDate() - 1)
+  while (hasActivity(check)) {
+    streak++
+    check.setDate(check.getDate() - 1)
+  }
+  return streak
+}
+
 export const getThisWeekCount = (workouts) => {
   const today = new Date()
-  const start = new Date(today); start.setDate(today.getDate() - today.getDay()); start.setHours(0,0,0,0)
+  const start = new Date(today); start.setDate(today.getDate() - today.getDay()); start.setHours(0, 0, 0, 0)
   return workouts.filter(w => new Date(w.date + 'T12:00:00') >= start).length
 }

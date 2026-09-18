@@ -1,14 +1,15 @@
 import { format } from 'date-fns'
 import { LineChart, Line, ResponsiveContainer, Tooltip } from 'recharts'
 import {
-  getTotalXP, getLevel, getEarnedBadges, getWeeklyStreak,
+  getTotalXP, getLevel, getEarnedBadges, getWeeklyStreak, getBWStreak,
   getThisWeekCount, getNextMilestone, getPrevMilestone, BADGES,
 } from '../utils/gamification'
 
-export default function DashboardView({ workouts, bodyWeights }) {
+export default function DashboardView({ workouts, bodyWeights, entries }) {
   const totalXP = getTotalXP(workouts)
   const level = getLevel(totalXP)
-  const streak = getWeeklyStreak(workouts)
+  const gymStreak = getWeeklyStreak(workouts)
+  const bwStreak = getBWStreak(entries)
   const thisWeek = getThisWeekCount(workouts)
   const dayCount = workouts.length
   const nextMilestone = getNextMilestone(dayCount)
@@ -79,15 +80,22 @@ export default function DashboardView({ workouts, bodyWeights }) {
         </div>
       </div>
 
-      {/* Streak + This Week */}
-      <div className="grid grid-cols-2 gap-3">
+      {/* Streaks */}
+      <div className="grid grid-cols-3 gap-3">
         <div className="bg-white rounded-2xl p-4 shadow-sm text-center">
-          <p className="text-3xl font-black text-amber-500">{streak}</p>
-          <p className="text-xs text-slate-500 mt-0.5">🔥 Week Streak</p>
+          <p className="text-3xl font-black text-amber-500">{gymStreak}</p>
+          <p className="text-xs text-slate-500 mt-0.5">🏋️ Gym Streak</p>
+          <p className="text-xs text-slate-400">weeks</p>
+        </div>
+        <div className="bg-white rounded-2xl p-4 shadow-sm text-center">
+          <p className="text-3xl font-black text-emerald-500">{bwStreak}</p>
+          <p className="text-xs text-slate-500 mt-0.5">💪 BW Streak</p>
+          <p className="text-xs text-slate-400">days</p>
         </div>
         <div className="bg-white rounded-2xl p-4 shadow-sm text-center">
           <p className="text-3xl font-black text-blue-500">{thisWeek}</p>
           <p className="text-xs text-slate-500 mt-0.5">📅 This Week</p>
+          <p className="text-xs text-slate-400">sessions</p>
         </div>
       </div>
 

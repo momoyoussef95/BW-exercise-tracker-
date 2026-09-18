@@ -1,3 +1,4 @@
+const ENTRIES_KEY = 'bwt_entries'
 const WORKOUTS_KEY = 'et_workouts'
 const WEIGHTS_KEY = 'et_weights'
 const SKIPS_KEY = 'et_skips'
@@ -70,6 +71,22 @@ export const markSeeded = () => {
 }
 
 const DEFAULT_GOALS = { pushups: 50, squats: 50, plank: 60, history: [] }
+
+export const getEntries = () => parse(ENTRIES_KEY, {})
+
+export const saveEntry = (date, entry) => {
+  const entries = getEntries()
+  entries[date] = { ...entry, updatedAt: new Date().toISOString() }
+  localStorage.setItem(ENTRIES_KEY, JSON.stringify(entries))
+  return entries
+}
+
+export const deleteEntry = (date) => {
+  const entries = getEntries()
+  delete entries[date]
+  localStorage.setItem(ENTRIES_KEY, JSON.stringify(entries))
+  return entries
+}
 
 export const getGoals = () => parse(GOALS_KEY, DEFAULT_GOALS)
 
