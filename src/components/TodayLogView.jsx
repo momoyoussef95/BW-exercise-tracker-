@@ -33,9 +33,9 @@ const EMPTY_FORM = { type: 'weights', duration: '', exercisesRaw: '', notes: '',
 const EMPTY_SPORT_FORM = { sport: '', duration: '', notes: '', partner: '' }
 
 export default function TodayLogView({
-  workouts, bodyWeights, skips, entries, sports,
+  workouts, bodyWeights, skips, entries, sports, quickWins,
   onSaveWorkout, onSaveWeight, onSaveSkip, onDeleteSkip, onSaveEntry, onDeleteEntry,
-  onSaveSport, onDeleteSport,
+  onSaveSport, onDeleteSport, onSaveQuickWin, onDeleteQuickWin,
 }) {
   const today = todayStr()
   const [selectedDate, setSelectedDate] = useState(today)
@@ -45,6 +45,7 @@ export default function TodayLogView({
   const dateSkip = skips[selectedDate]
   const dateEntry = entries[selectedDate]
   const dateSports = sports.filter(s => s.date === selectedDate)
+  const dateQuickWins = quickWins.filter(q => q.date === selectedDate)
 
   const [showGymForm, setShowGymForm] = useState(false)
   const [gymForm, setGymForm] = useState(EMPTY_FORM)
@@ -55,6 +56,7 @@ export default function TodayLogView({
   const [bwSaved, setBwSaved] = useState(false)
   const [showSportForm, setShowSportForm] = useState(false)
   const [sportForm, setSportForm] = useState(EMPTY_SPORT_FORM)
+  const [quickWinText, setQuickWinText] = useState('')
   const [entForm, setEntForm] = useState({ done: false, minutes: '', notes: '' })
   const [entSaved, setEntSaved] = useState(false)
   const [newsForm, setNewsForm] = useState({ done: false, minutes: '', notes: '' })
@@ -92,6 +94,7 @@ export default function TodayLogView({
     setEntSaved(false)
     setNewsSaved(false)
     setXyzSaved(false)
+    setQuickWinText('')
   }, [selectedDate]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const openEdit = () => {
@@ -162,6 +165,16 @@ export default function TodayLogView({
     onSaveSport(sport)
     setShowSportForm(false)
     setSportForm(EMPTY_SPORT_FORM)
+  }
+
+  const handleSaveQuickWin = () => {
+    if (!quickWinText.trim()) return
+    onSaveQuickWin({
+      id: `win-${selectedDate}-${Date.now()}`,
+      date: selectedDate,
+      text: quickWinText.trim(),
+    })
+    setQuickWinText('')
   }
 
   const handleSaveEntertainment = () => {
@@ -253,6 +266,47 @@ export default function TodayLogView({
             Today
           </button>
         )}
+      </div>
+
+      {/* Quick Wins */}
+      <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+        <div className="px-5 py-3.5 border-b border-slate-50 flex items-center justify-between">
+          <h3 className="font-semibold text-slate-800">🌟 Quick Wins</h3>
+          {dateQuickWins.length > 0 && (
+            <p className="text-xs text-emerald-600 font-medium">{dateQuickWins.length} logged</p>
+          )}
+        </div>
+        <div className="px-5 py-4 space-y-2.5">
+          {dateQuickWins.map(w => (
+            <div key={w.id} className="flex items-center gap-3 bg-slate-50 rounded-xl px-3.5 py-2.5">
+              <span className="text-lg shrink-0">🌟</span>
+              <p className="flex-1 min-w-0 text-sm text-slate-700">{w.text}</p>
+              <button
+                onClick={() => onDeleteQuickWin(w.id)}
+                className="text-xs text-red-400 hover:text-red-600 shrink-0"
+              >
+                Delete
+              </button>
+            </div>
+          ))}
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={quickWinText}
+              onChange={e => setQuickWinText(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') handleSaveQuickWin() }}
+              placeholder="e.g. Meal prepped for the week"
+              className="flex-1 bg-slate-50 rounded-xl px-4 py-2.5 text-slate-900 outline-none focus:ring-2 focus:ring-emerald-300 text-sm"
+            />
+            <button
+              onClick={handleSaveQuickWin}
+              disabled={!quickWinText.trim()}
+              className="px-4 py-2.5 rounded-xl bg-emerald-500 text-white text-sm font-semibold disabled:opacity-50 shrink-0"
+            >
+              Add
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Rest day banner */}

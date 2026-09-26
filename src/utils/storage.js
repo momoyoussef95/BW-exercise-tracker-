@@ -5,6 +5,7 @@ const SKIPS_KEY = 'et_skips'
 const SEEDED_KEY = 'et_seeded'
 const GOALS_KEY = 'bwt_goals'
 const SPORTS_KEY = 'et_sports'
+const QUICKWINS_KEY = 'et_quickwins'
 
 const parse = (key, fallback) => {
   try {
@@ -109,6 +110,24 @@ export const deleteSport = (id) => {
   return sports
 }
 
+export const getQuickWins = () => parse(QUICKWINS_KEY, [])
+
+export const saveQuickWin = (win) => {
+  const wins = getQuickWins()
+  const idx = wins.findIndex(w => w.id === win.id)
+  if (idx >= 0) wins[idx] = win
+  else wins.push(win)
+  wins.sort((a, b) => a.date.localeCompare(b.date))
+  localStorage.setItem(QUICKWINS_KEY, JSON.stringify(wins))
+  return wins
+}
+
+export const deleteQuickWin = (id) => {
+  const wins = getQuickWins().filter(w => w.id !== id)
+  localStorage.setItem(QUICKWINS_KEY, JSON.stringify(wins))
+  return wins
+}
+
 export const exportData = () => ({
   exportedAt: new Date().toISOString(),
   workouts: getWorkouts(),
@@ -116,6 +135,7 @@ export const exportData = () => ({
   bodyWeights: getBodyWeights(),
   skips: getSkips(),
   entries: getEntries(),
+  quickWins: getQuickWins(),
   goals: getGoals(),
 })
 

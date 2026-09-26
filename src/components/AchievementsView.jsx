@@ -1,17 +1,52 @@
+import { format } from 'date-fns'
 import {
   getTotalXP, getLevel, getEarnedBadges,
   BADGES, LEVELS, MILESTONES,
 } from '../utils/gamification'
 
-export default function AchievementsView({ workouts }) {
+export default function AchievementsView({ workouts, quickWins = [], onDeleteQuickWin }) {
   const totalXP = getTotalXP(workouts)
   const level = getLevel(totalXP)
   const earnedBadgeIds = getEarnedBadges(workouts)
   const dayCount = workouts.length
+  const sortedQuickWins = [...quickWins].sort((a, b) => b.date.localeCompare(a.date))
 
   return (
     <div className="space-y-4">
       <h2 className="text-2xl font-bold text-slate-900">Wins 🏆</h2>
+
+      {/* Quick Wins */}
+      <div className="bg-white rounded-2xl p-4 shadow-sm">
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-sm font-semibold text-slate-700">Quick Wins 🌟</p>
+          <p className="text-xs text-slate-400">{quickWins.length} logged</p>
+        </div>
+        {sortedQuickWins.length === 0 ? (
+          <p className="text-sm text-slate-400">
+            Log a quick win any day from the Log tab, and it'll show up here to look back on.
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {sortedQuickWins.map(w => (
+              <div key={w.id} className="flex items-start gap-3 bg-slate-50 rounded-xl px-3.5 py-2.5">
+                <span className="text-lg shrink-0">🌟</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-slate-700">{w.text}</p>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    {format(new Date(w.date + 'T12:00:00'), 'EEEE, MMM d')}
+                  </p>
+                </div>
+                <button
+                  onClick={() => onDeleteQuickWin(w.id)}
+                  className="text-xs text-red-400 hover:text-red-600 shrink-0"
+                >
+                  Delete
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Level hero */}
       <div

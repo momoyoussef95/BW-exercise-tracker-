@@ -10,6 +10,7 @@ import {
   getSkips, saveSkip, deleteSkip,
   getEntries, saveEntry, deleteEntry,
   getSports, saveSport, deleteSport,
+  getQuickWins, saveQuickWin, deleteQuickWin,
   isSeeded, markSeeded, bulkSaveWorkouts,
 } from './utils/storage'
 import { SEED_WORKOUTS, SEED_WEIGHT } from './utils/seedData'
@@ -29,6 +30,7 @@ export default function App() {
   const [skips, setSkips] = useState({})
   const [entries, setEntries] = useState({})
   const [sports, setSports] = useState([])
+  const [quickWins, setQuickWins] = useState([])
 
   useEffect(() => {
     if (!isSeeded()) {
@@ -41,6 +43,7 @@ export default function App() {
     setSkips(getSkips())
     setEntries(getEntries())
     setSports(getSports())
+    setQuickWins(getQuickWins())
   }, [])
 
   const handleSaveWorkout = (workout) => setWorkouts([...saveWorkout(workout)])
@@ -52,6 +55,8 @@ export default function App() {
   const handleDeleteEntry = (date) => setEntries({ ...deleteEntry(date) })
   const handleSaveSport = (sport) => setSports([...saveSport(sport)])
   const handleDeleteSport = (id) => setSports([...deleteSport(id)])
+  const handleSaveQuickWin = (win) => setQuickWins([...saveQuickWin(win)])
+  const handleDeleteQuickWin = (id) => setQuickWins([...deleteQuickWin(id)])
 
   const view = {
     home: (
@@ -64,6 +69,7 @@ export default function App() {
         skips={skips}
         entries={entries}
         sports={sports}
+        quickWins={quickWins}
         onSaveWorkout={handleSaveWorkout}
         onSaveWeight={handleSaveWeight}
         onSaveSkip={handleSaveSkip}
@@ -72,10 +78,12 @@ export default function App() {
         onDeleteEntry={handleDeleteEntry}
         onSaveSport={handleSaveSport}
         onDeleteSport={handleDeleteSport}
+        onSaveQuickWin={handleSaveQuickWin}
+        onDeleteQuickWin={handleDeleteQuickWin}
       />
     ),
     stats: <StatsView workouts={workouts} bodyWeights={bodyWeights} sports={sports} />,
-    wins: <AchievementsView workouts={workouts} />,
+    wins: <AchievementsView workouts={workouts} quickWins={quickWins} onDeleteQuickWin={handleDeleteQuickWin} />,
     history: (
       <HistoryView
         workouts={workouts}
