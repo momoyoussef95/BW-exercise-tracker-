@@ -4,6 +4,7 @@ const WEIGHTS_KEY = 'et_weights'
 const SKIPS_KEY = 'et_skips'
 const SEEDED_KEY = 'et_seeded'
 const GOALS_KEY = 'bwt_goals'
+const SPORTS_KEY = 'et_sports'
 
 const parse = (key, fallback) => {
   try {
@@ -22,6 +23,8 @@ export const saveWorkout = (workout) => {
   if (idx >= 0) workouts[idx] = workout
   else workouts.push(workout)
   workouts.sort((a, b) => a.date.localeCompare(b.date))
+  // Renumber by date order so a backdated entry doesn't break the day count
+  workouts.forEach((w, i) => { w.dayNumber = i + 1 })
   localStorage.setItem(WORKOUTS_KEY, JSON.stringify(workouts))
   return workouts
 }
@@ -76,7 +79,7 @@ export const getEntries = () => parse(ENTRIES_KEY, {})
 
 export const saveEntry = (date, entry) => {
   const entries = getEntries()
-  entries[date] = { ...entry, updatedAt: new Date().toISOString() }
+  entries[date] = { ...entries[date], ...entry, updatedAt: new Date().toISOString() }
   localStorage.setItem(ENTRIES_KEY, JSON.stringify(entries))
   return entries
 }
@@ -86,6 +89,24 @@ export const deleteEntry = (date) => {
   delete entries[date]
   localStorage.setItem(ENTRIES_KEY, JSON.stringify(entries))
   return entries
+}
+
+export const getSports = () => parse(SPORTS_KEY, [])
+
+export const saveSport = (sport) => {
+  const sports = getSports()
+  const idx = sports.findIndex(s => s.id === sport.id)
+  if (idx >= 0) sports[idx] = sport
+  else sports.push(sport)
+  sports.sort((a, b) => a.date.localeCompare(b.date))
+  localStorage.setItem(SPORTS_KEY, JSON.stringify(sports))
+  return sports
+}
+
+export const deleteSport = (id) => {
+  const sports = getSports().filter(s => s.id !== id)
+  localStorage.setItem(SPORTS_KEY, JSON.stringify(sports))
+  return sports
 }
 
 export const getGoals = () => parse(GOALS_KEY, DEFAULT_GOALS)

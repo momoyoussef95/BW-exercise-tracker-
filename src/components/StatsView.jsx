@@ -4,7 +4,7 @@ import {
   XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer,
 } from 'recharts'
 
-export default function StatsView({ workouts, bodyWeights }) {
+export default function StatsView({ workouts, bodyWeights, sports = [] }) {
   // Body weight trend (last 20 readings)
   const weightData = Object.entries(bodyWeights)
     .sort(([a], [b]) => a.localeCompare(b))
@@ -42,6 +42,14 @@ export default function StatsView({ workouts, bodyWeights }) {
   const topExercises = Object.entries(exerciseCounts)
     .sort(([, a], [, b]) => b - a)
     .slice(0, 10)
+
+  // Sports summary
+  const sportCounts = sports.reduce((acc, s) => {
+    acc[s.sport] = (acc[s.sport] || 0) + 1
+    return acc
+  }, {})
+  const topSports = Object.entries(sportCounts).sort(([, a], [, b]) => b - a)
+  const sportsMinutes = sports.reduce((sum, s) => sum + (s.duration || 0), 0)
 
   // Summary stats
   const totalMinutes = workouts.reduce((sum, w) => sum + (w.duration || 0), 0)
@@ -185,6 +193,26 @@ export default function StatsView({ workouts, bodyWeights }) {
                 className="bg-slate-100 text-slate-700 text-xs px-3 py-1.5 rounded-full font-medium"
               >
                 {ex} <span className="text-slate-400">×{count}</span>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Sports */}
+      {topSports.length > 0 && (
+        <div className="bg-white rounded-2xl p-4 shadow-sm">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-sm font-semibold text-slate-700">Sports ⚽</p>
+            <p className="text-xs text-slate-400">{sports.length} sessions · {Math.round(sportsMinutes / 60)}h total</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {topSports.map(([sport, count]) => (
+              <span
+                key={sport}
+                className="bg-slate-100 text-slate-700 text-xs px-3 py-1.5 rounded-full font-medium"
+              >
+                🏅 {sport} <span className="text-slate-400">×{count}</span>
               </span>
             ))}
           </div>

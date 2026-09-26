@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { format } from 'date-fns'
+import { format, isToday as isTodayFn } from 'date-fns'
 import { calcXP } from '../utils/gamification'
 
 const todayStr = () => format(new Date(), 'yyyy-MM-dd')
@@ -24,17 +24,27 @@ const SUGGESTIONS = [
   'Sled Push', 'Sled Pull', 'Battle Ropes', 'Burpees', 'Box Jumps', 'Yoga',
 ]
 
+const SPORT_SUGGESTIONS = [
+  'Soccer', 'Pickleball', 'Basketball', 'Tennis', 'Volleyball', 'Padel',
+  'Badminton', 'Golf', 'Swimming', 'Hockey', 'Softball', 'Flag Football',
+]
+
 const EMPTY_FORM = { type: 'weights', duration: '', exercisesRaw: '', notes: '', partner: '' }
+const EMPTY_SPORT_FORM = { sport: '', duration: '', notes: '', partner: '' }
 
 export default function TodayLogView({
-  workouts, bodyWeights, skips, entries,
+  workouts, bodyWeights, skips, entries, sports,
   onSaveWorkout, onSaveWeight, onSaveSkip, onDeleteSkip, onSaveEntry, onDeleteEntry,
+  onSaveSport, onDeleteSport,
 }) {
   const today = todayStr()
-  const todayWorkout = workouts.find(w => w.date === today)
-  const todayWeight = bodyWeights[today]
-  const todaySkip = skips[today]
-  const todayEntry = entries[today]
+  const [selectedDate, setSelectedDate] = useState(today)
+
+  const dateWorkout = workouts.find(w => w.date === selectedDate)
+  const dateWeight = bodyWeights[selectedDate]
+  const dateSkip = skips[selectedDate]
+  const dateEntry = entries[selectedDate]
+  const dateSports = sports.filter(s => s.date === selectedDate)
 
   const [showGymForm, setShowGymForm] = useState(false)
   const [gymForm, setGymForm] = useState(EMPTY_FORM)
@@ -43,28 +53,44 @@ export default function TodayLogView({
   const [skipReason, setSkipReason] = useState('')
   const [bwForm, setBwForm] = useState({ pushups: '', squats: '', plank: '' })
   const [bwSaved, setBwSaved] = useState(false)
+  const [showSportForm, setShowSportForm] = useState(false)
+  const [sportForm, setSportForm] = useState(EMPTY_SPORT_FORM)
+  const [entForm, setEntForm] = useState({ done: false, minutes: '' })
+  const [entSaved, setEntSaved] = useState(false)
+  const [newsForm, setNewsForm] = useState({ done: false, minutes: '' })
+  const [newsSaved, setNewsSaved] = useState(false)
 
+  // Reset the on-screen forms whenever the selected date (or its data) changes
   useEffect(() => {
-    setWeightInput(todayWeight != null ? todayWeight.toString() : '')
-  }, [todayWeight])
-
-  useEffect(() => {
-    if (todayEntry) {
-      setBwForm({
-        pushups: todayEntry.pushups?.toString() || '',
-        squats: todayEntry.squats?.toString() || '',
-        plank: todayEntry.plank?.toString() || '',
-      })
-    }
-  }, []) // only on mount to avoid overwriting while editing
+    setWeightInput(dateWeight != null ? dateWeight.toString() : '')
+    setBwForm({
+      pushups: dateEntry?.pushups?.toString() || '',
+      squats: dateEntry?.squats?.toString() || '',
+      plank: dateEntry?.plank?.toString() || '',
+    })
+    setEntForm({
+      done: !!dateEntry?.entertainment?.done,
+      minutes: dateEntry?.entertainment?.minutes?.toString() || '',
+    })
+    setNewsForm({
+      done: !!dateEntry?.news?.done,
+      minutes: dateEntry?.news?.minutes?.toString() || '',
+    })
+    setShowGymForm(false)
+    setShowSportForm(false)
+    setShowSkipForm(false)
+    setBwSaved(false)
+    setEntSaved(false)
+    setNewsSaved(false)
+  }, [selectedDate]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const openEdit = () => {
-    setGymForm(todayWorkout ? {
-      type: todayWorkout.type,
-      duration: todayWorkout.duration.toString(),
-      exercisesRaw: todayWorkout.exercises?.join(', ') || '',
-      notes: todayWorkout.notes || '',
-      partner: todayWorkout.partner || '',
+    setGymForm(dateWorkout ? {
+      type: dateWorkout.type,
+      duration: dateWorkout.duration.toString(),
+      exercisesRaw: dateWorkout.exercises?.join(', ') || '',
+      notes: dateWorkout.notes || '',
+      partner: dateWorkout.partner || '',
     } : EMPTY_FORM)
     setShowGymForm(true)
   }
@@ -72,16 +98,16 @@ export default function TodayLogView({
   const handleSaveGym = () => {
     if (!gymForm.duration) return
     const exercises = gymForm.exercisesRaw.split(',').map(e => e.trim()).filter(Boolean)
-    const isEdit = !!todayWorkout
+    const isEdit = !!dateWorkout
     const workout = {
-      id: isEdit ? todayWorkout.id : `w-${today}-${Date.now()}`,
-      date: today,
+      id: isEdit ? dateWorkout.id : `w-${selectedDate}-${Date.now()}`,
+      date: selectedDate,
       type: gymForm.type,
       duration: parseInt(gymForm.duration) || 0,
       exercises,
       notes: gymForm.notes,
       partner: gymForm.partner.trim() || null,
-      dayNumber: isEdit ? todayWorkout.dayNumber : workouts.length + 1,
+      dayNumber: isEdit ? dateWorkout.dayNumber : workouts.length + 1,
       xp: 0,
     }
     workout.xp = calcXP(workout)
@@ -92,11 +118,11 @@ export default function TodayLogView({
 
   const handleSaveWeight = () => {
     const val = parseFloat(weightInput)
-    if (!isNaN(val) && val > 50 && val < 600) onSaveWeight(today, val)
+    if (!isNaN(val) && val > 50 && val < 600) onSaveWeight(selectedDate, val)
   }
 
   const handleSaveSkip = () => {
-    onSaveSkip(today, skipReason)
+    onSaveSkip(selectedDate, skipReason)
     setShowSkipForm(false)
     setSkipReason('')
   }
@@ -108,9 +134,40 @@ export default function TodayLogView({
       plank: parseInt(bwForm.plank) || 0,
     }
     if (!entry.pushups && !entry.squats && !entry.plank) return
-    onSaveEntry(today, entry)
+    onSaveEntry(selectedDate, entry)
     setBwSaved(true)
     setTimeout(() => setBwSaved(false), 2000)
+  }
+
+  const handleSaveSport = () => {
+    if (!sportForm.sport.trim() || !sportForm.duration) return
+    const sport = {
+      id: `sport-${selectedDate}-${Date.now()}`,
+      date: selectedDate,
+      sport: sportForm.sport.trim(),
+      duration: parseInt(sportForm.duration) || 0,
+      notes: sportForm.notes,
+      partner: sportForm.partner.trim() || null,
+    }
+    onSaveSport(sport)
+    setShowSportForm(false)
+    setSportForm(EMPTY_SPORT_FORM)
+  }
+
+  const handleSaveEntertainment = () => {
+    onSaveEntry(selectedDate, {
+      entertainment: { done: entForm.done, minutes: parseInt(entForm.minutes) || 0 },
+    })
+    setEntSaved(true)
+    setTimeout(() => setEntSaved(false), 2000)
+  }
+
+  const handleSaveNews = () => {
+    onSaveEntry(selectedDate, {
+      news: { done: newsForm.done, minutes: parseInt(newsForm.minutes) || 0 },
+    })
+    setNewsSaved(true)
+    setTimeout(() => setNewsSaved(false), 2000)
   }
 
   const previewXP = gymForm.duration
@@ -133,6 +190,10 @@ export default function TodayLogView({
     .filter(s => !usedExercises.includes(s.toLowerCase()))
     .slice(0, 12)
 
+  const filteredSportSuggestions = SPORT_SUGGESTIONS
+    .filter(s => s.toLowerCase() !== sportForm.sport.trim().toLowerCase())
+    .slice(0, 12)
+
   const formatPlank = (s) => {
     if (!s) return ''
     const sec = parseInt(s) || 0
@@ -143,44 +204,70 @@ export default function TodayLogView({
     return `${m}m ${r}s`
   }
 
+  const isSelectedToday = isTodayFn(new Date(selectedDate + 'T12:00:00'))
+  const dateLabel = isSelectedToday
+    ? `Today, ${format(new Date(selectedDate + 'T12:00:00'), 'MMMM d')}`
+    : format(new Date(selectedDate + 'T12:00:00'), 'EEEE, MMMM d, yyyy')
+
   return (
     <div className="space-y-4">
       <div>
         <h2 className="text-2xl font-bold text-slate-900">Log</h2>
-        <p className="text-sm text-slate-400">{format(new Date(), 'EEEE, MMMM d')}</p>
+        <p className="text-sm text-slate-400">{dateLabel}</p>
+      </div>
+
+      {/* Date picker - log any day, not just today */}
+      <div className="bg-white rounded-2xl shadow-sm p-4 flex items-center gap-3">
+        <span className="text-xl shrink-0">📅</span>
+        <label className="text-sm text-slate-500 shrink-0">Logging for</label>
+        <input
+          type="date"
+          value={selectedDate}
+          max={today}
+          onChange={e => setSelectedDate(e.target.value)}
+          className="flex-1 bg-slate-50 rounded-xl px-3 py-2 text-slate-900 text-sm outline-none focus:ring-2 focus:ring-emerald-300"
+        />
+        {!isSelectedToday && (
+          <button
+            onClick={() => setSelectedDate(today)}
+            className="text-xs text-emerald-600 underline shrink-0"
+          >
+            Today
+          </button>
+        )}
       </div>
 
       {/* Rest day banner */}
-      {todaySkip && !todayWorkout && (
+      {dateSkip && !dateWorkout && (
         <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3">
           <span className="text-2xl mt-0.5">😴</span>
           <div className="flex-1">
             <p className="font-semibold text-amber-800">Rest Day</p>
-            {todaySkip.reason && (
-              <p className="text-sm text-amber-700 mt-0.5">{todaySkip.reason}</p>
+            {dateSkip.reason && (
+              <p className="text-sm text-amber-700 mt-0.5">{dateSkip.reason}</p>
             )}
           </div>
-          <button onClick={() => onDeleteSkip(today)} className="text-xs text-amber-500 underline shrink-0">
+          <button onClick={() => onDeleteSkip(selectedDate)} className="text-xs text-amber-500 underline shrink-0">
             Undo
           </button>
         </div>
       )}
 
       {/* Logged workout banner */}
-      {todayWorkout && !showGymForm && (
+      {dateWorkout && !showGymForm && (
         <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 flex items-start gap-3">
           <span className="text-2xl mt-0.5">
-            {todayWorkout.type === 'weights' ? '🏋️' : todayWorkout.type === 'cardio' ? '🏃' : '⚡'}
+            {dateWorkout.type === 'weights' ? '🏋️' : dateWorkout.type === 'cardio' ? '🏃' : '⚡'}
           </span>
           <div className="flex-1 min-w-0">
             <p className="font-semibold text-emerald-800">
-              Day {todayWorkout.dayNumber} done! +{todayWorkout.xp} XP ✨
+              Day {dateWorkout.dayNumber} done! +{dateWorkout.xp} XP ✨
             </p>
             <p className="text-sm text-emerald-700 truncate mt-0.5">
-              {todayWorkout.exercises?.slice(0, 4).join(', ')} · {todayWorkout.duration}min
+              {dateWorkout.exercises?.slice(0, 4).join(', ')} · {dateWorkout.duration}min
             </p>
-            {todayWorkout.notes && (
-              <p className="text-xs text-emerald-600 mt-1 italic">"{todayWorkout.notes}"</p>
+            {dateWorkout.notes && (
+              <p className="text-xs text-emerald-600 mt-1 italic">"{dateWorkout.notes}"</p>
             )}
           </div>
           <button onClick={openEdit} className="text-xs text-emerald-600 underline shrink-0">Edit</button>
@@ -192,7 +279,7 @@ export default function TodayLogView({
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
           <div className="px-5 py-3.5 border-b border-slate-50">
             <h3 className="font-semibold text-slate-800">
-              {todayWorkout ? '✏️ Edit Session' : '🏋️ Log Session'}
+              {dateWorkout ? '✏️ Edit Session' : '🏋️ Log Session'}
             </h3>
           </div>
           <div className="px-5 py-4 space-y-3.5">
@@ -288,7 +375,7 @@ export default function TodayLogView({
                 disabled={!gymForm.duration}
                 className="flex-1 py-2.5 rounded-xl bg-emerald-500 text-white text-sm font-semibold disabled:opacity-50"
               >
-                {todayWorkout ? 'Save Changes' : `Log Day ${workouts.length + 1}! 💪`}
+                {dateWorkout ? 'Save Changes' : (isSelectedToday ? `Log Day ${workouts.length + 1}! 💪` : 'Log Session 💪')}
               </button>
             </div>
           </div>
@@ -296,22 +383,130 @@ export default function TodayLogView({
       )}
 
       {/* Prompt to log gym session */}
-      {!todayWorkout && !todaySkip && !showGymForm && (
+      {!dateWorkout && !dateSkip && !showGymForm && (
         <div className="bg-white rounded-2xl shadow-sm p-5">
           <button
             onClick={openEdit}
             className="w-full py-3.5 rounded-xl bg-emerald-50 text-emerald-700 font-semibold text-sm hover:bg-emerald-100 transition-colors"
           >
-            + Log Today's Gym Session
+            + Log {isSelectedToday ? "Today's" : 'a'} Gym Session
           </button>
         </div>
       )}
+
+      {/* Sports */}
+      <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+        <div className="px-5 py-3.5 border-b border-slate-50 flex items-center justify-between">
+          <h3 className="font-semibold text-slate-800">⚽ Sports</h3>
+          {dateSports.length > 0 && (
+            <p className="text-xs text-emerald-600 font-medium">{dateSports.length} logged</p>
+          )}
+        </div>
+        <div className="px-5 py-4 space-y-3">
+          {dateSports.map(s => (
+            <div key={s.id} className="flex items-center gap-3 bg-slate-50 rounded-xl px-3.5 py-2.5">
+              <span className="text-lg shrink-0">🏅</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-slate-700 truncate">
+                  {s.sport} · {s.duration}min{s.partner ? ` · 👥 ${s.partner}` : ''}
+                </p>
+                {s.notes && <p className="text-xs text-slate-400 truncate">{s.notes}</p>}
+              </div>
+              <button
+                onClick={() => onDeleteSport(s.id)}
+                className="text-xs text-red-400 hover:text-red-600 shrink-0"
+              >
+                Delete
+              </button>
+            </div>
+          ))}
+
+          {showSportForm ? (
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs text-slate-500 mb-1 block">Sport</label>
+                <input
+                  type="text"
+                  value={sportForm.sport}
+                  onChange={e => setSportForm(f => ({ ...f, sport: e.target.value }))}
+                  placeholder="e.g. Soccer, Pickleball..."
+                  className="w-full bg-slate-50 rounded-xl px-4 py-2.5 text-slate-900 outline-none focus:ring-2 focus:ring-emerald-300"
+                />
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {filteredSportSuggestions.map(s => (
+                    <button
+                      key={s}
+                      onClick={() => setSportForm(f => ({ ...f, sport: s }))}
+                      className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-full hover:bg-emerald-100 hover:text-emerald-700 transition-colors"
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="text-xs text-slate-500 mb-1 block">Duration (minutes)</label>
+                <input
+                  type="number"
+                  value={sportForm.duration}
+                  onChange={e => setSportForm(f => ({ ...f, duration: e.target.value }))}
+                  placeholder="e.g. 60"
+                  className="w-full bg-slate-50 rounded-xl px-4 py-2.5 text-slate-900 outline-none focus:ring-2 focus:ring-emerald-300"
+                  min="1"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-slate-500 mb-1 block">Who with (optional)</label>
+                <input
+                  type="text"
+                  value={sportForm.partner}
+                  onChange={e => setSportForm(f => ({ ...f, partner: e.target.value }))}
+                  placeholder="e.g. Hassan"
+                  className="w-full bg-slate-50 rounded-xl px-4 py-2.5 text-slate-900 outline-none focus:ring-2 focus:ring-emerald-300"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-slate-500 mb-1 block">Notes (optional)</label>
+                <textarea
+                  value={sportForm.notes}
+                  onChange={e => setSportForm(f => ({ ...f, notes: e.target.value }))}
+                  placeholder="How'd it go?"
+                  className="w-full bg-slate-50 rounded-xl px-4 py-2.5 text-slate-900 outline-none focus:ring-2 focus:ring-emerald-300 resize-none text-sm"
+                  rows={2}
+                />
+              </div>
+              <div className="flex gap-2 pt-1">
+                <button
+                  onClick={() => { setShowSportForm(false); setSportForm(EMPTY_SPORT_FORM) }}
+                  className="flex-1 py-2.5 rounded-xl bg-slate-100 text-slate-600 text-sm font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveSport}
+                  disabled={!sportForm.sport.trim() || !sportForm.duration}
+                  className="flex-1 py-2.5 rounded-xl bg-emerald-500 text-white text-sm font-semibold disabled:opacity-50"
+                >
+                  Save Sport
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowSportForm(true)}
+              className="w-full py-2.5 rounded-xl bg-emerald-50 text-emerald-700 font-semibold text-sm hover:bg-emerald-100 transition-colors"
+            >
+              + Add Sport
+            </button>
+          )}
+        </div>
+      </div>
 
       {/* Body Weight Exercises */}
       <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
         <div className="px-5 py-3.5 border-b border-slate-50 flex items-center justify-between">
           <h3 className="font-semibold text-slate-800">💪 Body Weight Exercises</h3>
-          {todayEntry && (
+          {dateEntry && (dateEntry.pushups || dateEntry.squats || dateEntry.plank) && (
             <p className="text-xs text-emerald-600 font-medium">Logged ✓</p>
           )}
         </div>
@@ -336,18 +531,18 @@ export default function TodayLogView({
             </div>
           ))}
 
-          {todayEntry && (
+          {dateEntry && (dateEntry.pushups || dateEntry.squats || dateEntry.plank) && (
             <div className="text-xs text-slate-400 flex gap-3 pt-1">
-              {todayEntry.pushups > 0 && <span>Push-ups: {todayEntry.pushups}</span>}
-              {todayEntry.squats > 0 && <span>Squats: {todayEntry.squats}</span>}
-              {todayEntry.plank > 0 && <span>Plank: {formatPlank(todayEntry.plank.toString())}</span>}
+              {dateEntry.pushups > 0 && <span>Push-ups: {dateEntry.pushups}</span>}
+              {dateEntry.squats > 0 && <span>Squats: {dateEntry.squats}</span>}
+              {dateEntry.plank > 0 && <span>Plank: {formatPlank(dateEntry.plank.toString())}</span>}
             </div>
           )}
 
           <div className="flex gap-2 pt-1">
-            {todayEntry && (
+            {dateEntry && (dateEntry.pushups || dateEntry.squats || dateEntry.plank) && (
               <button
-                onClick={() => { onDeleteEntry(today); setBwForm({ pushups: '', squats: '', plank: '' }) }}
+                onClick={() => { onDeleteEntry(selectedDate); setBwForm({ pushups: '', squats: '', plank: '' }) }}
                 className="flex-1 py-2.5 rounded-xl bg-slate-100 text-slate-500 text-sm font-medium"
               >
                 Clear
@@ -364,6 +559,88 @@ export default function TodayLogView({
               {bwSaved ? 'Saved! ✓' : 'Save BW Reps'}
             </button>
           </div>
+        </div>
+      </div>
+
+      {/* Entertainment */}
+      <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+        <div className="px-5 py-3.5 border-b border-slate-50 flex items-center justify-between">
+          <h3 className="font-semibold text-slate-800">📺 Entertainment</h3>
+          {dateEntry?.entertainment?.done && (
+            <p className="text-xs text-emerald-600 font-medium">Logged ✓</p>
+          )}
+        </div>
+        <div className="px-5 py-4 space-y-3">
+          <label className="flex items-center gap-3">
+            <input
+              type="checkbox"
+              checked={entForm.done}
+              onChange={e => setEntForm(f => ({ ...f, done: e.target.checked }))}
+              className="w-5 h-5 rounded accent-emerald-500"
+            />
+            <span className="text-sm text-slate-600">I watched entertainment today</span>
+          </label>
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-slate-600 w-20">Duration</span>
+            <input
+              type="number"
+              value={entForm.minutes}
+              onChange={e => setEntForm(f => ({ ...f, minutes: e.target.value }))}
+              placeholder="0"
+              className="flex-1 text-right bg-slate-50 rounded-xl px-3 py-2 text-slate-900 font-semibold outline-none focus:ring-2 focus:ring-emerald-300 text-sm"
+              min="0"
+            />
+            <span className="text-xs text-slate-400 w-7">min</span>
+          </div>
+          <button
+            onClick={handleSaveEntertainment}
+            className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-colors ${
+              entSaved ? 'bg-emerald-100 text-emerald-700' : 'bg-emerald-500 text-white hover:bg-emerald-600'
+            }`}
+          >
+            {entSaved ? 'Saved! ✓' : 'Save Entertainment'}
+          </button>
+        </div>
+      </div>
+
+      {/* News */}
+      <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+        <div className="px-5 py-3.5 border-b border-slate-50 flex items-center justify-between">
+          <h3 className="font-semibold text-slate-800">📰 News</h3>
+          {dateEntry?.news?.done && (
+            <p className="text-xs text-emerald-600 font-medium">Logged ✓</p>
+          )}
+        </div>
+        <div className="px-5 py-4 space-y-3">
+          <label className="flex items-center gap-3">
+            <input
+              type="checkbox"
+              checked={newsForm.done}
+              onChange={e => setNewsForm(f => ({ ...f, done: e.target.checked }))}
+              className="w-5 h-5 rounded accent-emerald-500"
+            />
+            <span className="text-sm text-slate-600">I caught up on the news today</span>
+          </label>
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-slate-600 w-20">Duration</span>
+            <input
+              type="number"
+              value={newsForm.minutes}
+              onChange={e => setNewsForm(f => ({ ...f, minutes: e.target.value }))}
+              placeholder="0"
+              className="flex-1 text-right bg-slate-50 rounded-xl px-3 py-2 text-slate-900 font-semibold outline-none focus:ring-2 focus:ring-emerald-300 text-sm"
+              min="0"
+            />
+            <span className="text-xs text-slate-400 w-7">min</span>
+          </div>
+          <button
+            onClick={handleSaveNews}
+            className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-colors ${
+              newsSaved ? 'bg-emerald-100 text-emerald-700' : 'bg-emerald-500 text-white hover:bg-emerald-600'
+            }`}
+          >
+            {newsSaved ? 'Saved! ✓' : 'Save News'}
+          </button>
         </div>
       </div>
 
@@ -392,14 +669,14 @@ export default function TodayLogView({
               Save
             </button>
           </div>
-          {todayWeight != null && (
-            <p className="text-xs text-emerald-600 mt-2">✓ Today: {todayWeight} lbs</p>
+          {dateWeight != null && (
+            <p className="text-xs text-emerald-600 mt-2">✓ {isSelectedToday ? 'Today' : 'That day'}: {dateWeight} lbs</p>
           )}
         </div>
       </div>
 
       {/* Skip / Rest Day */}
-      {!todayWorkout && !todaySkip && (
+      {!dateWorkout && !dateSkip && (
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
           {showSkipForm ? (
             <div className="px-5 py-4 space-y-3">
