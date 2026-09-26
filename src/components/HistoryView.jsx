@@ -3,18 +3,27 @@ import { format } from 'date-fns'
 
 const TYPE_ICONS = { weights: '🏋️', cardio: '🏃', mixed: '⚡' }
 
-export default function HistoryView({ workouts, skips, onDelete, onSaveWorkout }) {
+export default function HistoryView({ workouts, skips, entries, sports, onDelete, onSaveWorkout, onDeleteSport }) {
   const [deleteConfirm, setDeleteConfirm] = useState(null)
   const [expandId, setExpandId] = useState(null)
 
   const items = [
     ...workouts.map(w => ({ ...w, _kind: 'workout' })),
+    ...(sports || []).map(s => ({ ...s, _kind: 'sport' })),
     ...Object.entries(skips).map(([date, skip]) => ({
       id: `skip-${date}`,
       date,
       _kind: 'skip',
       reason: skip.reason,
     })),
+    ...Object.entries(entries || {})
+      .filter(([, e]) => e.pushups || e.squats || e.plank || e.entertainment?.done || e.news?.done)
+      .map(([date, e]) => ({
+        id: `entry-${date}`,
+        date,
+        _kind: 'entry',
+        entry: e,
+      })),
   ].sort((a, b) => b.date.localeCompare(a.date))
 
   if (items.length === 0) {
@@ -53,6 +62,50 @@ export default function HistoryView({ workouts, skips, onDelete, onSaveWorkout }
                     <p className="text-xs text-slate-400 mt-0.5 italic">{item.reason}</p>
                   )}
                 </div>
+              </div>
+            </div>
+          )
+        }
+
+        if (item._kind === 'sport') {
+          return (
+            <div key={item.id} className="bg-white rounded-2xl shadow-sm">
+              <div className="px-5 py-3.5 flex items-center gap-3">
+                <span className="text-xl shrink-0">🏅</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-slate-700">
+                    {item.sport} · {item.duration}min
+                    {item.partner ? ` · 👥 ${item.partner}` : ''}
+                  </p>
+                  <p className="text-xs text-slate-400">{format(d, 'EEEE, MMM d')}</p>
+                  {item.notes && (
+                    <p className="text-xs text-slate-400 mt-0.5 italic">{item.notes}</p>
+                  )}
+                </div>
+                <button
+                  onClick={() => onDeleteSport(item.id)}
+                  className="text-xs text-red-400 hover:text-red-600 shrink-0"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          )
+        }
+
+        if (item._kind === 'entry') {
+          const e = item.entry
+          const bits = []
+          if (e.pushups) bits.push(`💪 ${e.pushups} push-ups`)
+          if (e.squats) bits.push(`🦵 ${e.squats} squats`)
+          if (e.plank) bits.push(`⏱️ ${e.plank}s plank`)
+          if (e.entertainment?.done) bits.push(`📺 ${e.entertainment.minutes || 0}min entertainment`)
+          if (e.news?.done) bits.push(`📰 ${e.news.minutes || 0}min news`)
+          return (
+            <div key={item.id} className="bg-white rounded-2xl shadow-sm">
+              <div className="px-5 py-3.5">
+                <p className="text-xs text-slate-400 mb-1">{format(d, 'EEEE, MMM d')}</p>
+                <p className="text-sm text-slate-600">{bits.join(' · ')}</p>
               </div>
             </div>
           )

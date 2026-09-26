@@ -9,6 +9,7 @@ import {
   getBodyWeights, saveBodyWeight,
   getSkips, saveSkip, deleteSkip,
   getEntries, saveEntry, deleteEntry,
+  getSports, saveSport, deleteSport,
   isSeeded, markSeeded, bulkSaveWorkouts,
 } from './utils/storage'
 import { SEED_WORKOUTS, SEED_WEIGHT } from './utils/seedData'
@@ -27,6 +28,7 @@ export default function App() {
   const [bodyWeights, setBodyWeights] = useState({})
   const [skips, setSkips] = useState({})
   const [entries, setEntries] = useState({})
+  const [sports, setSports] = useState([])
 
   useEffect(() => {
     if (!isSeeded()) {
@@ -38,6 +40,7 @@ export default function App() {
     setBodyWeights(getBodyWeights())
     setSkips(getSkips())
     setEntries(getEntries())
+    setSports(getSports())
   }, [])
 
   const handleSaveWorkout = (workout) => setWorkouts([...saveWorkout(workout)])
@@ -47,6 +50,8 @@ export default function App() {
   const handleDeleteSkip = (date) => setSkips({ ...deleteSkip(date) })
   const handleSaveEntry = (date, entry) => setEntries({ ...saveEntry(date, entry) })
   const handleDeleteEntry = (date) => setEntries({ ...deleteEntry(date) })
+  const handleSaveSport = (sport) => setSports([...saveSport(sport)])
+  const handleDeleteSport = (id) => setSports([...deleteSport(id)])
 
   const view = {
     home: (
@@ -58,22 +63,28 @@ export default function App() {
         bodyWeights={bodyWeights}
         skips={skips}
         entries={entries}
+        sports={sports}
         onSaveWorkout={handleSaveWorkout}
         onSaveWeight={handleSaveWeight}
         onSaveSkip={handleSaveSkip}
         onDeleteSkip={handleDeleteSkip}
         onSaveEntry={handleSaveEntry}
         onDeleteEntry={handleDeleteEntry}
+        onSaveSport={handleSaveSport}
+        onDeleteSport={handleDeleteSport}
       />
     ),
-    stats: <StatsView workouts={workouts} bodyWeights={bodyWeights} />,
+    stats: <StatsView workouts={workouts} bodyWeights={bodyWeights} sports={sports} />,
     wins: <AchievementsView workouts={workouts} />,
     history: (
       <HistoryView
         workouts={workouts}
         skips={skips}
+        entries={entries}
+        sports={sports}
         onDelete={handleDeleteWorkout}
         onSaveWorkout={handleSaveWorkout}
+        onDeleteSport={handleDeleteSport}
       />
     ),
   }
@@ -82,7 +93,7 @@ export default function App() {
     <div className="min-h-screen bg-slate-50">
       <header className="bg-white border-b border-slate-100 px-5 py-3.5 flex items-center gap-2">
         <span className="text-2xl">💪</span>
-        <h1 className="text-lg font-bold text-slate-900">Exercise Tracker</h1>
+        <h1 className="text-lg font-bold text-slate-900">Fitness Tracker</h1>
       </header>
 
       <main className="max-w-lg mx-auto px-4 py-6 pb-28">
