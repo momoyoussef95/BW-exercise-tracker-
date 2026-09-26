@@ -109,6 +109,16 @@ export const deleteSport = (id) => {
   return sports
 }
 
+export const exportData = () => ({
+  exportedAt: new Date().toISOString(),
+  workouts: getWorkouts(),
+  sports: getSports(),
+  bodyWeights: getBodyWeights(),
+  skips: getSkips(),
+  entries: getEntries(),
+  goals: getGoals(),
+})
+
 export const getGoals = () => parse(GOALS_KEY, DEFAULT_GOALS)
 
 export const saveGoals = (newGoals) => {

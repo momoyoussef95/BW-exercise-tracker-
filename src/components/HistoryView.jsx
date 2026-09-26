@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { format } from 'date-fns'
+import { exportData } from '../utils/storage'
 
 const TYPE_ICONS = { weights: '🏋️', cardio: '🏃', mixed: '⚡' }
 
@@ -17,7 +18,7 @@ export default function HistoryView({ workouts, skips, entries, sports, onDelete
       reason: skip.reason,
     })),
     ...Object.entries(entries || {})
-      .filter(([, e]) => e.pushups || e.squats || e.plank || e.entertainment?.done || e.news?.done)
+      .filter(([, e]) => e.pushups || e.squats || e.plank || e.entertainment?.done || e.news?.done || e.xyz?.done)
       .map(([date, e]) => ({
         id: `entry-${date}`,
         date,
@@ -25,6 +26,17 @@ export default function HistoryView({ workouts, skips, entries, sports, onDelete
         entry: e,
       })),
   ].sort((a, b) => b.date.localeCompare(a.date))
+
+  const handleExport = () => {
+    const data = exportData()
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `fitness-tracker-backup-${format(new Date(), 'yyyy-MM-dd')}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
 
   if (items.length === 0) {
     return (
@@ -40,9 +52,17 @@ export default function HistoryView({ workouts, skips, entries, sports, onDelete
 
   return (
     <div className="space-y-4">
-      <div>
-        <h2 className="text-2xl font-bold text-slate-900">History 📋</h2>
-        <p className="text-sm text-slate-400">{workouts.length} workout days logged</p>
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-900">History 📋</h2>
+          <p className="text-sm text-slate-400">{workouts.length} workout days logged</p>
+        </div>
+        <button
+          onClick={handleExport}
+          className="text-xs bg-slate-100 text-slate-600 px-3 py-2 rounded-xl font-medium shrink-0 hover:bg-slate-200 transition-colors"
+        >
+          ⬇️ Export Data
+        </button>
       </div>
 
       {items.map(item => {
@@ -95,17 +115,30 @@ export default function HistoryView({ workouts, skips, entries, sports, onDelete
 
         if (item._kind === 'entry') {
           const e = item.entry
-          const bits = []
-          if (e.pushups) bits.push(`💪 ${e.pushups} push-ups`)
-          if (e.squats) bits.push(`🦵 ${e.squats} squats`)
-          if (e.plank) bits.push(`⏱️ ${e.plank}s plank`)
-          if (e.entertainment?.done) bits.push(`📺 ${e.entertainment.minutes || 0}min entertainment`)
-          if (e.news?.done) bits.push(`📰 ${e.news.minutes || 0}min news`)
+          const bwBits = []
+          if (e.pushups) bwBits.push(`💪 ${e.pushups} push-ups`)
+          if (e.squats) bwBits.push(`🦵 ${e.squats} squats`)
+          if (e.plank) bwBits.push(`⏱️ ${e.plank}s plank`)
+          const lines = [
+            { icon: '📺', label: 'Entertainment', data: e.entertainment },
+            { icon: '📰', label: 'News', data: e.news },
+            { icon: '🔒', label: 'XYZ', data: e.xyz },
+          ].filter(l => l.data?.done)
           return (
             <div key={item.id} className="bg-white rounded-2xl shadow-sm">
-              <div className="px-5 py-3.5">
-                <p className="text-xs text-slate-400 mb-1">{format(d, 'EEEE, MMM d')}</p>
-                <p className="text-sm text-slate-600">{bits.join(' · ')}</p>
+              <div className="px-5 py-3.5 space-y-1.5">
+                <p className="text-xs text-slate-400">{format(d, 'EEEE, MMM d')}</p>
+                {bwBits.length > 0 && (
+                  <p className="text-sm text-slate-600">{bwBits.join(' · ')}</p>
+                )}
+                {lines.map(l => (
+                  <div key={l.label} className="text-sm text-slate-600">
+                    <span>{l.icon} {l.label} · {l.data.minutes || 0}min</span>
+                    {l.data.notes && (
+                      <p className="text-xs text-slate-400 italic mt-0.5">{l.data.notes}</p>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
           )
