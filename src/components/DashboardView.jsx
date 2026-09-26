@@ -5,7 +5,48 @@ import {
   getThisWeekCount, getNextMilestone, getPrevMilestone, BADGES,
 } from '../utils/gamification'
 
-export default function DashboardView({ workouts, bodyWeights, entries }) {
+const todayStr = () => format(new Date(), 'yyyy-MM-dd')
+
+export default function DashboardView({ workouts, bodyWeights, entries, sports = [], quickWins = [] }) {
+  const today = todayStr()
+  const todayWorkout = workouts.find(w => w.date === today)
+  const todaySports = sports.filter(s => s.date === today)
+  const todayQuickWins = quickWins.filter(q => q.date === today)
+  const todayEntry = entries[today]
+
+  const glanceItems = [
+    {
+      icon: todayWorkout ? '✅' : '⬜️',
+      label: todayWorkout ? `${todayWorkout.type === 'weights' ? '🏋️' : todayWorkout.type === 'cardio' ? '🏃' : '⚡'} Gym logged` : 'No gym session yet',
+      done: !!todayWorkout,
+    },
+    {
+      icon: todaySports.length > 0 ? '✅' : '⬜️',
+      label: todaySports.length > 0 ? `⚽ ${todaySports.map(s => s.sport).join(', ')}` : 'No sports yet',
+      done: todaySports.length > 0,
+    },
+    {
+      icon: todayQuickWins.length > 0 ? '✅' : '⬜️',
+      label: todayQuickWins.length > 0 ? `🌟 ${todayQuickWins.length} quick win${todayQuickWins.length > 1 ? 's' : ''}` : 'No quick wins yet',
+      done: todayQuickWins.length > 0,
+    },
+    {
+      icon: todayEntry?.entertainment?.done ? '✅' : '⬜️',
+      label: todayEntry?.entertainment?.done ? `📺 ${todayEntry.entertainment.minutes || 0}min entertainment` : 'No entertainment logged',
+      done: !!todayEntry?.entertainment?.done,
+    },
+    {
+      icon: todayEntry?.news?.done ? '✅' : '⬜️',
+      label: todayEntry?.news?.done ? `📰 ${todayEntry.news.minutes || 0}min news` : 'No news logged',
+      done: !!todayEntry?.news?.done,
+    },
+    {
+      icon: todayEntry?.xyz?.done ? '✅' : '⬜️',
+      label: todayEntry?.xyz?.done ? '🔒 XYZ logged' : 'No XYZ logged',
+      done: !!todayEntry?.xyz?.done,
+    },
+  ]
+
   const totalXP = getTotalXP(workouts)
   const level = getLevel(totalXP)
   const gymStreak = getWeeklyStreak(workouts)
@@ -31,6 +72,21 @@ export default function DashboardView({ workouts, bodyWeights, entries }) {
 
   return (
     <div className="space-y-4">
+      {/* Today at a Glance */}
+      <div className="bg-white rounded-2xl p-4 shadow-sm">
+        <p className="text-sm font-semibold text-slate-700 mb-3">Today at a Glance</p>
+        <div className="space-y-2">
+          {glanceItems.map(item => (
+            <div key={item.label} className="flex items-center gap-2.5">
+              <span className="shrink-0">{item.icon}</span>
+              <span className={`text-sm ${item.done ? 'text-slate-700 font-medium' : 'text-slate-400'}`}>
+                {item.label}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Hero: Day counter */}
       <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl p-5 text-white shadow-sm">
         <div className="flex items-center justify-between">

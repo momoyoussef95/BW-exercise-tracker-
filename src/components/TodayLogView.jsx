@@ -32,6 +32,28 @@ const SPORT_SUGGESTIONS = [
 const EMPTY_FORM = { type: 'weights', duration: '', exercisesRaw: '', notes: '', partner: '' }
 const EMPTY_SPORT_FORM = { sport: '', duration: '', notes: '', partner: '' }
 
+function Section({ id, icon, title, badge, open, onToggle, children }) {
+  return (
+    <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+      <button
+        onClick={() => onToggle(id)}
+        className="w-full px-5 py-3.5 flex items-center justify-between text-left"
+      >
+        <h3 className="font-semibold text-slate-800">{icon} {title}</h3>
+        <div className="flex items-center gap-2 shrink-0">
+          {badge}
+          <span className="text-slate-300 text-xs">{open ? '▲' : '▼'}</span>
+        </div>
+      </button>
+      {open && (
+        <div className="px-5 py-4 border-t border-slate-50">
+          {children}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function TodayLogView({
   workouts, bodyWeights, skips, entries, sports, quickWins,
   onSaveWorkout, onSaveWeight, onSaveSkip, onDeleteSkip, onSaveEntry, onDeleteEntry,
@@ -63,9 +85,21 @@ export default function TodayLogView({
   const [newsSaved, setNewsSaved] = useState(false)
   const [xyzForm, setXyzForm] = useState({ done: false, minutes: '', notes: '' })
   const [xyzSaved, setXyzSaved] = useState(false)
+  const [openSections, setOpenSections] = useState({})
+  const toggleSection = (id) => setOpenSections(s => ({ ...s, [id]: !s[id] }))
 
   // Reset the on-screen forms whenever the selected date (or its data) changes
   useEffect(() => {
+    // Smart accordion: open sections that still need input, collapse ones already logged
+    setOpenSections({
+      quickWins: dateQuickWins.length === 0,
+      sports: dateSports.length === 0,
+      bw: !(dateEntry?.pushups || dateEntry?.squats || dateEntry?.plank),
+      entertainment: !dateEntry?.entertainment?.done,
+      news: !dateEntry?.news?.done,
+      xyz: !dateEntry?.xyz?.done,
+      weight: dateWeight == null,
+    })
     setWeightInput(dateWeight != null ? dateWeight.toString() : '')
     setBwForm({
       pushups: dateEntry?.pushups?.toString() || '',
@@ -269,14 +303,14 @@ export default function TodayLogView({
       </div>
 
       {/* Quick Wins */}
-      <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-        <div className="px-5 py-3.5 border-b border-slate-50 flex items-center justify-between">
-          <h3 className="font-semibold text-slate-800">🌟 Quick Wins</h3>
-          {dateQuickWins.length > 0 && (
-            <p className="text-xs text-emerald-600 font-medium">{dateQuickWins.length} logged</p>
-          )}
-        </div>
-        <div className="px-5 py-4 space-y-2.5">
+      <Section
+        id="quickWins" icon="🌟" title="Quick Wins"
+        open={openSections.quickWins} onToggle={toggleSection}
+        badge={dateQuickWins.length > 0 && (
+          <p className="text-xs text-emerald-600 font-medium">{dateQuickWins.length} logged</p>
+        )}
+      >
+        <div className="space-y-2.5">
           {dateQuickWins.map(w => (
             <div key={w.id} className="flex items-center gap-3 bg-slate-50 rounded-xl px-3.5 py-2.5">
               <span className="text-lg shrink-0">🌟</span>
@@ -307,7 +341,7 @@ export default function TodayLogView({
             </button>
           </div>
         </div>
-      </div>
+      </Section>
 
       {/* Rest day banner */}
       {dateSkip && !dateWorkout && (
@@ -467,14 +501,14 @@ export default function TodayLogView({
       )}
 
       {/* Sports */}
-      <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-        <div className="px-5 py-3.5 border-b border-slate-50 flex items-center justify-between">
-          <h3 className="font-semibold text-slate-800">⚽ Sports</h3>
-          {dateSports.length > 0 && (
-            <p className="text-xs text-emerald-600 font-medium">{dateSports.length} logged</p>
-          )}
-        </div>
-        <div className="px-5 py-4 space-y-3">
+      <Section
+        id="sports" icon="⚽" title="Sports"
+        open={openSections.sports} onToggle={toggleSection}
+        badge={dateSports.length > 0 && (
+          <p className="text-xs text-emerald-600 font-medium">{dateSports.length} logged</p>
+        )}
+      >
+        <div className="space-y-3">
           {dateSports.map(s => (
             <div key={s.id} className="flex items-center gap-3 bg-slate-50 rounded-xl px-3.5 py-2.5">
               <span className="text-lg shrink-0">🏅</span>
@@ -572,17 +606,17 @@ export default function TodayLogView({
             </button>
           )}
         </div>
-      </div>
+      </Section>
 
       {/* Body Weight Exercises */}
-      <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-        <div className="px-5 py-3.5 border-b border-slate-50 flex items-center justify-between">
-          <h3 className="font-semibold text-slate-800">💪 Body Weight Exercises</h3>
-          {dateEntry && (dateEntry.pushups || dateEntry.squats || dateEntry.plank) && (
-            <p className="text-xs text-emerald-600 font-medium">Logged ✓</p>
-          )}
-        </div>
-        <div className="px-5 py-4 space-y-3">
+      <Section
+        id="bw" icon="💪" title="Body Weight Exercises"
+        open={openSections.bw} onToggle={toggleSection}
+        badge={dateEntry && (dateEntry.pushups || dateEntry.squats || dateEntry.plank) && (
+          <p className="text-xs text-emerald-600 font-medium">Logged ✓</p>
+        )}
+      >
+        <div className="space-y-3">
           {[
             { field: 'pushups', label: 'Push-ups', icon: '🤜', unit: 'reps', placeholder: '0' },
             { field: 'squats',  label: 'Squats',   icon: '🦵', unit: 'reps', placeholder: '0' },
@@ -632,17 +666,17 @@ export default function TodayLogView({
             </button>
           </div>
         </div>
-      </div>
+      </Section>
 
       {/* Entertainment */}
-      <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-        <div className="px-5 py-3.5 border-b border-slate-50 flex items-center justify-between">
-          <h3 className="font-semibold text-slate-800">📺 Entertainment</h3>
-          {dateEntry?.entertainment?.done && (
-            <p className="text-xs text-emerald-600 font-medium">Logged ✓</p>
-          )}
-        </div>
-        <div className="px-5 py-4 space-y-3">
+      <Section
+        id="entertainment" icon="📺" title="Entertainment"
+        open={openSections.entertainment} onToggle={toggleSection}
+        badge={dateEntry?.entertainment?.done && (
+          <p className="text-xs text-emerald-600 font-medium">Logged ✓</p>
+        )}
+      >
+        <div className="space-y-3">
           <label className="flex items-center gap-3">
             <input
               type="checkbox"
@@ -680,17 +714,17 @@ export default function TodayLogView({
             {entSaved ? 'Saved! ✓' : 'Save Entertainment'}
           </button>
         </div>
-      </div>
+      </Section>
 
       {/* News */}
-      <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-        <div className="px-5 py-3.5 border-b border-slate-50 flex items-center justify-between">
-          <h3 className="font-semibold text-slate-800">📰 News</h3>
-          {dateEntry?.news?.done && (
-            <p className="text-xs text-emerald-600 font-medium">Logged ✓</p>
-          )}
-        </div>
-        <div className="px-5 py-4 space-y-3">
+      <Section
+        id="news" icon="📰" title="News"
+        open={openSections.news} onToggle={toggleSection}
+        badge={dateEntry?.news?.done && (
+          <p className="text-xs text-emerald-600 font-medium">Logged ✓</p>
+        )}
+      >
+        <div className="space-y-3">
           <label className="flex items-center gap-3">
             <input
               type="checkbox"
@@ -728,17 +762,17 @@ export default function TodayLogView({
             {newsSaved ? 'Saved! ✓' : 'Save News'}
           </button>
         </div>
-      </div>
+      </Section>
 
       {/* XYZ */}
-      <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-        <div className="px-5 py-3.5 border-b border-slate-50 flex items-center justify-between">
-          <h3 className="font-semibold text-slate-800">🔒 XYZ</h3>
-          {dateEntry?.xyz?.done && (
-            <p className="text-xs text-emerald-600 font-medium">Logged ✓</p>
-          )}
-        </div>
-        <div className="px-5 py-4 space-y-3">
+      <Section
+        id="xyz" icon="🔒" title="XYZ"
+        open={openSections.xyz} onToggle={toggleSection}
+        badge={dateEntry?.xyz?.done && (
+          <p className="text-xs text-emerald-600 font-medium">Logged ✓</p>
+        )}
+      >
+        <div className="space-y-3">
           <label className="flex items-center gap-3">
             <input
               type="checkbox"
@@ -776,14 +810,17 @@ export default function TodayLogView({
             {xyzSaved ? 'Saved! ✓' : 'Save XYZ'}
           </button>
         </div>
-      </div>
+      </Section>
 
       {/* Scale Weight */}
-      <div className="bg-white rounded-2xl shadow-sm">
-        <div className="px-5 py-3.5 border-b border-slate-50">
-          <h3 className="font-semibold text-slate-800">⚖️ Scale Weight</h3>
-        </div>
-        <div className="px-5 py-4">
+      <Section
+        id="weight" icon="⚖️" title="Scale Weight"
+        open={openSections.weight} onToggle={toggleSection}
+        badge={dateWeight != null && (
+          <p className="text-xs text-emerald-600 font-medium">{dateWeight} lbs</p>
+        )}
+      >
+        <div>
           <div className="flex items-center gap-3">
             <input
               type="number"
@@ -807,7 +844,7 @@ export default function TodayLogView({
             <p className="text-xs text-emerald-600 mt-2">✓ {isSelectedToday ? 'Today' : 'That day'}: {dateWeight} lbs</p>
           )}
         </div>
-      </div>
+      </Section>
 
       {/* Skip / Rest Day */}
       {!dateWorkout && !dateSkip && (
