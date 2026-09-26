@@ -55,10 +55,12 @@ export default function TodayLogView({
   const [bwSaved, setBwSaved] = useState(false)
   const [showSportForm, setShowSportForm] = useState(false)
   const [sportForm, setSportForm] = useState(EMPTY_SPORT_FORM)
-  const [entForm, setEntForm] = useState({ done: false, minutes: '' })
+  const [entForm, setEntForm] = useState({ done: false, minutes: '', notes: '' })
   const [entSaved, setEntSaved] = useState(false)
-  const [newsForm, setNewsForm] = useState({ done: false, minutes: '' })
+  const [newsForm, setNewsForm] = useState({ done: false, minutes: '', notes: '' })
   const [newsSaved, setNewsSaved] = useState(false)
+  const [xyzForm, setXyzForm] = useState({ done: false, minutes: '', notes: '' })
+  const [xyzSaved, setXyzSaved] = useState(false)
 
   // Reset the on-screen forms whenever the selected date (or its data) changes
   useEffect(() => {
@@ -71,10 +73,17 @@ export default function TodayLogView({
     setEntForm({
       done: !!dateEntry?.entertainment?.done,
       minutes: dateEntry?.entertainment?.minutes?.toString() || '',
+      notes: dateEntry?.entertainment?.notes || '',
     })
     setNewsForm({
       done: !!dateEntry?.news?.done,
       minutes: dateEntry?.news?.minutes?.toString() || '',
+      notes: dateEntry?.news?.notes || '',
+    })
+    setXyzForm({
+      done: !!dateEntry?.xyz?.done,
+      minutes: dateEntry?.xyz?.minutes?.toString() || '',
+      notes: dateEntry?.xyz?.notes || '',
     })
     setShowGymForm(false)
     setShowSportForm(false)
@@ -82,6 +91,7 @@ export default function TodayLogView({
     setBwSaved(false)
     setEntSaved(false)
     setNewsSaved(false)
+    setXyzSaved(false)
   }, [selectedDate]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const openEdit = () => {
@@ -156,7 +166,7 @@ export default function TodayLogView({
 
   const handleSaveEntertainment = () => {
     onSaveEntry(selectedDate, {
-      entertainment: { done: entForm.done, minutes: parseInt(entForm.minutes) || 0 },
+      entertainment: { done: entForm.done, minutes: parseInt(entForm.minutes) || 0, notes: entForm.notes },
     })
     setEntSaved(true)
     setTimeout(() => setEntSaved(false), 2000)
@@ -164,10 +174,18 @@ export default function TodayLogView({
 
   const handleSaveNews = () => {
     onSaveEntry(selectedDate, {
-      news: { done: newsForm.done, minutes: parseInt(newsForm.minutes) || 0 },
+      news: { done: newsForm.done, minutes: parseInt(newsForm.minutes) || 0, notes: newsForm.notes },
     })
     setNewsSaved(true)
     setTimeout(() => setNewsSaved(false), 2000)
+  }
+
+  const handleSaveXyz = () => {
+    onSaveEntry(selectedDate, {
+      xyz: { done: xyzForm.done, minutes: parseInt(xyzForm.minutes) || 0, notes: xyzForm.notes },
+    })
+    setXyzSaved(true)
+    setTimeout(() => setXyzSaved(false), 2000)
   }
 
   const previewXP = gymForm.duration
@@ -592,6 +610,13 @@ export default function TodayLogView({
             />
             <span className="text-xs text-slate-400 w-7">min</span>
           </div>
+          <textarea
+            value={entForm.notes}
+            onChange={e => setEntForm(f => ({ ...f, notes: e.target.value }))}
+            placeholder="Notes (what did you watch, thoughts...)"
+            className="w-full bg-slate-50 rounded-xl px-4 py-2.5 text-slate-900 outline-none focus:ring-2 focus:ring-emerald-300 resize-none text-sm"
+            rows={2}
+          />
           <button
             onClick={handleSaveEntertainment}
             className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-colors ${
@@ -633,6 +658,13 @@ export default function TodayLogView({
             />
             <span className="text-xs text-slate-400 w-7">min</span>
           </div>
+          <textarea
+            value={newsForm.notes}
+            onChange={e => setNewsForm(f => ({ ...f, notes: e.target.value }))}
+            placeholder="Notes (what did you read, thoughts...)"
+            className="w-full bg-slate-50 rounded-xl px-4 py-2.5 text-slate-900 outline-none focus:ring-2 focus:ring-emerald-300 resize-none text-sm"
+            rows={2}
+          />
           <button
             onClick={handleSaveNews}
             className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-colors ${
@@ -640,6 +672,54 @@ export default function TodayLogView({
             }`}
           >
             {newsSaved ? 'Saved! ✓' : 'Save News'}
+          </button>
+        </div>
+      </div>
+
+      {/* XYZ */}
+      <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+        <div className="px-5 py-3.5 border-b border-slate-50 flex items-center justify-between">
+          <h3 className="font-semibold text-slate-800">🔒 XYZ</h3>
+          {dateEntry?.xyz?.done && (
+            <p className="text-xs text-emerald-600 font-medium">Logged ✓</p>
+          )}
+        </div>
+        <div className="px-5 py-4 space-y-3">
+          <label className="flex items-center gap-3">
+            <input
+              type="checkbox"
+              checked={xyzForm.done}
+              onChange={e => setXyzForm(f => ({ ...f, done: e.target.checked }))}
+              className="w-5 h-5 rounded accent-emerald-500"
+            />
+            <span className="text-sm text-slate-600">Logged today</span>
+          </label>
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-slate-600 w-20">Duration</span>
+            <input
+              type="number"
+              value={xyzForm.minutes}
+              onChange={e => setXyzForm(f => ({ ...f, minutes: e.target.value }))}
+              placeholder="0"
+              className="flex-1 text-right bg-slate-50 rounded-xl px-3 py-2 text-slate-900 font-semibold outline-none focus:ring-2 focus:ring-emerald-300 text-sm"
+              min="0"
+            />
+            <span className="text-xs text-slate-400 w-7">min</span>
+          </div>
+          <textarea
+            value={xyzForm.notes}
+            onChange={e => setXyzForm(f => ({ ...f, notes: e.target.value }))}
+            placeholder="Notes (triggers, how you're feeling...)"
+            className="w-full bg-slate-50 rounded-xl px-4 py-2.5 text-slate-900 outline-none focus:ring-2 focus:ring-emerald-300 resize-none text-sm"
+            rows={2}
+          />
+          <button
+            onClick={handleSaveXyz}
+            className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-colors ${
+              xyzSaved ? 'bg-emerald-100 text-emerald-700' : 'bg-emerald-500 text-white hover:bg-emerald-600'
+            }`}
+          >
+            {xyzSaved ? 'Saved! ✓' : 'Save XYZ'}
           </button>
         </div>
       </div>
