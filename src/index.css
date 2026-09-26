@@ -19,3 +19,90 @@ input[type='number']::-webkit-outer-spin-button {
 input[type='number'] {
   -moz-appearance: textfield;
 }
+
+/* ============================================================
+   Themes. The app defaults to the light look above; these two
+   blocks reskin every existing Tailwind utility class in place
+   (via the `data-theme` attribute on <html>) so components don't
+   need per-theme classes sprinkled through their markup.
+   ============================================================ */
+
+html[data-theme='dark'] body { background-color: #0f172a; }
+
+html[data-theme='dark'] .bg-white { background-color: #1e293b; }
+html[data-theme='dark'] .bg-slate-50 { background-color: #0f172a; }
+html[data-theme='dark'] .bg-slate-100 { background-color: #334155; }
+html[data-theme='dark'] .bg-slate-200 { background-color: #475569; }
+html[data-theme='dark'] .border-slate-50 { border-color: #1e293b; }
+html[data-theme='dark'] .border-slate-100 { border-color: #334155; }
+
+html[data-theme='dark'] .text-slate-900 { color: #f8fafc; }
+html[data-theme='dark'] .text-slate-800 { color: #e2e8f0; }
+html[data-theme='dark'] .text-slate-700 { color: #cbd5e1; }
+html[data-theme='dark'] .text-slate-600 { color: #94a3b8; }
+html[data-theme='dark'] .text-slate-500 { color: #94a3b8; }
+html[data-theme='dark'] .text-slate-400 { color: #64748b; }
+html[data-theme='dark'] .text-slate-300 { color: #475569; }
+
+html[data-theme='dark'] .text-emerald-600,
+html[data-theme='dark'] .text-emerald-700 { color: #34d399; }
+html[data-theme='dark'] .text-emerald-800 { color: #6ee7b7; }
+html[data-theme='dark'] .bg-emerald-50 { background-color: rgba(16, 185, 129, 0.14); }
+html[data-theme='dark'] .bg-emerald-100 { background-color: rgba(16, 185, 129, 0.18); }
+html[data-theme='dark'] .bg-emerald-200 { background-color: rgba(16, 185, 129, 0.24); }
+html[data-theme='dark'] .border-emerald-100 { border-color: rgba(16, 185, 129, 0.3); }
+html[data-theme='dark'] .border-emerald-200 { border-color: rgba(16, 185, 129, 0.4); }
+
+html[data-theme='dark'] .bg-amber-50 { background-color: rgba(245, 158, 11, 0.14); }
+html[data-theme='dark'] .border-amber-100 { border-color: rgba(245, 158, 11, 0.3); }
+html[data-theme='dark'] .border-amber-200 { border-color: rgba(245, 158, 11, 0.4); }
+html[data-theme='dark'] .text-amber-600,
+html[data-theme='dark'] .text-amber-700,
+html[data-theme='dark'] .text-amber-800 { color: #fbbf24; }
+
+html[data-theme='dark'] .bg-blue-50 { background-color: rgba(59, 130, 246, 0.14); }
+html[data-theme='dark'] .border-blue-100 { border-color: rgba(59, 130, 246, 0.3); }
+html[data-theme='dark'] .border-blue-200 { border-color: rgba(59, 130, 246, 0.4); }
+html[data-theme='dark'] .text-blue-500,
+html[data-theme='dark'] .text-blue-600,
+html[data-theme='dark'] .text-blue-700 { color: #60a5fa; }
+
+html[data-theme='dark'] .bg-violet-50 { background-color: rgba(139, 92, 246, 0.14); }
+html[data-theme='dark'] .border-violet-100 { border-color: rgba(139, 92, 246, 0.3); }
+html[data-theme='dark'] .border-violet-200 { border-color: rgba(139, 92, 246, 0.4); }
+html[data-theme='dark'] .text-violet-500,
+html[data-theme='dark'] .text-violet-600,
+html[data-theme='dark'] .text-violet-700 { color: #a78bfa; }
+
+html[data-theme='dark'] .bg-red-50 { background-color: rgba(239, 68, 68, 0.14); }
+html[data-theme='dark'] .text-red-600 { color: #f87171; }
+
+/* Fun theme: playful pink/purple palette instead of emerald */
+
+html[data-theme='fun'] body,
+html[data-theme='fun'] .bg-slate-50 { background: linear-gradient(160deg, #fdf2f8, #f5f3ff 60%, #fff7ed); }
+html[data-theme='fun'] .bg-white { background-color: #fffdfb; }
+html[data-theme='fun'] .bg-slate-100 { background-color: #fce7f3; }
+html[data-theme='fun'] .bg-slate-200 { background-color: #fbcfe8; }
+
+html[data-theme='fun'] .bg-emerald-500 { background-color: #ec4899; }
+html[data-theme='fun'] .bg-emerald-600 { background-color: #db2777; }
+html[data-theme='fun'] .bg-emerald-700 { background-color: #be185d; }
+html[data-theme='fun'] .bg-emerald-100 { background-color: #fbcfe8; }
+html[data-theme='fun'] .bg-emerald-50 { background-color: #fdf2f8; }
+html[data-theme='fun'] .border-emerald-100 { border-color: #fbcfe8; }
+html[data-theme='fun'] .border-emerald-200 { border-color: #f9a8d4; }
+html[data-theme='fun'] .text-emerald-600,
+html[data-theme='fun'] .text-emerald-700,
+html[data-theme='fun'] .text-emerald-800 { color: #db2777; }
+html[data-theme='fun'] .ring-emerald-300 { --tw-ring-color: #f9a8d4; }
+html[data-theme='fun'] .accent-emerald-500 { accent-color: #ec4899; }
+html[data-theme='fun'] .from-emerald-500 { --tw-gradient-from: #ec4899 var(--tw-gradient-from-position); }
+html[data-theme='fun'] .to-emerald-600 { --tw-gradient-to: #f97316 var(--tw-gradient-to-position); }
+
+html[data-theme='fun'] .bg-blue-50 { background-color: #f5f3ff; }
+html[data-theme='fun'] .border-blue-100 { border-color: #ede9fe; }
+html[data-theme='fun'] .border-blue-200 { border-color: #ddd6fe; }
+html[data-theme='fun'] .text-blue-500,
+html[data-theme='fun'] .text-blue-600,
+html[data-theme='fun'] .text-blue-700 { color: #a855f7; }

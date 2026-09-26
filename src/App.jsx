@@ -23,6 +23,12 @@ const TABS = [
   { id: 'history', label: 'History', icon: '📋' },
 ]
 
+const THEMES = [
+  { id: 'light', icon: '☀️', label: 'Light' },
+  { id: 'dark',  icon: '🌙', label: 'Dark' },
+  { id: 'fun',   icon: '🎉', label: 'Fun' },
+]
+
 export default function App() {
   const [tab, setTab] = useState('home')
   const [workouts, setWorkouts] = useState([])
@@ -31,6 +37,14 @@ export default function App() {
   const [entries, setEntries] = useState({})
   const [sports, setSports] = useState([])
   const [quickWins, setQuickWins] = useState([])
+  const [theme, setTheme] = useState(() => {
+    try { return localStorage.getItem('et_theme') || 'light' } catch { return 'light' }
+  })
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme)
+    try { localStorage.setItem('et_theme', theme) } catch {}
+  }, [theme])
 
   useEffect(() => {
     if (!isSeeded()) {
@@ -60,7 +74,13 @@ export default function App() {
 
   const view = {
     home: (
-      <DashboardView workouts={workouts} bodyWeights={bodyWeights} entries={entries} />
+      <DashboardView
+        workouts={workouts}
+        bodyWeights={bodyWeights}
+        entries={entries}
+        sports={sports}
+        quickWins={quickWins}
+      />
     ),
     log: (
       <TodayLogView
@@ -82,7 +102,15 @@ export default function App() {
         onDeleteQuickWin={handleDeleteQuickWin}
       />
     ),
-    stats: <StatsView workouts={workouts} bodyWeights={bodyWeights} sports={sports} />,
+    stats: (
+      <StatsView
+        workouts={workouts}
+        bodyWeights={bodyWeights}
+        sports={sports}
+        entries={entries}
+        quickWins={quickWins}
+      />
+    ),
     wins: <AchievementsView workouts={workouts} quickWins={quickWins} onDeleteQuickWin={handleDeleteQuickWin} />,
     history: (
       <HistoryView
@@ -101,7 +129,21 @@ export default function App() {
     <div className="min-h-screen bg-slate-50">
       <header className="bg-white border-b border-slate-100 px-5 py-3.5 flex items-center gap-2">
         <span className="text-2xl">💪</span>
-        <h1 className="text-lg font-bold text-slate-900">Fitness Tracker</h1>
+        <h1 className="text-lg font-bold text-slate-900 flex-1">Fitness Tracker</h1>
+        <div className="flex items-center gap-1 bg-slate-100 rounded-full p-1">
+          {THEMES.map(t => (
+            <button
+              key={t.id}
+              onClick={() => setTheme(t.id)}
+              title={t.label}
+              className={`w-7 h-7 flex items-center justify-center rounded-full text-sm transition-colors ${
+                theme === t.id ? 'bg-white shadow-sm' : 'opacity-50'
+              }`}
+            >
+              {t.icon}
+            </button>
+          ))}
+        </div>
       </header>
 
       <main className="max-w-lg mx-auto px-4 py-6 pb-28">

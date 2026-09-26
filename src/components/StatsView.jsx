@@ -4,7 +4,24 @@ import {
   XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer,
 } from 'recharts'
 
-export default function StatsView({ workouts, bodyWeights, sports = [] }) {
+export default function StatsView({ workouts, bodyWeights, sports = [], entries = {}, quickWins = [] }) {
+  // This week recap (Mon-Sun window containing today)
+  const now0 = new Date()
+  const thisWeekStart = startOfWeek(now0)
+  const thisWeekEnd = endOfWeek(now0)
+  const inThisWeek = (dateStr) => {
+    const d = new Date(dateStr + 'T12:00:00')
+    return d >= thisWeekStart && d <= thisWeekEnd
+  }
+  const weekWorkouts = workouts.filter(w => inThisWeek(w.date))
+  const weekSports = sports.filter(s => inThisWeek(s.date))
+  const weekQuickWins = quickWins.filter(q => inThisWeek(q.date))
+  const weekEntries = Object.entries(entries).filter(([date]) => inThisWeek(date)).map(([, e]) => e)
+  const weekBwDays = weekEntries.filter(e => e.pushups || e.squats || e.plank).length
+  const weekEntertainmentMin = weekEntries.reduce((sum, e) => sum + (e.entertainment?.minutes || 0), 0)
+  const weekNewsMin = weekEntries.reduce((sum, e) => sum + (e.news?.minutes || 0), 0)
+  const weekXyzMin = weekEntries.reduce((sum, e) => sum + (e.xyz?.minutes || 0), 0)
+
   // Body weight trend (last 20 readings)
   const weightData = Object.entries(bodyWeights)
     .sort(([a], [b]) => a.localeCompare(b))
@@ -67,6 +84,43 @@ export default function StatsView({ workouts, bodyWeights, sports = [] }) {
   return (
     <div className="space-y-4">
       <h2 className="text-2xl font-bold text-slate-900">Stats 📊</h2>
+
+      {/* This Week Recap */}
+      <div className="bg-white rounded-2xl p-4 shadow-sm">
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-sm font-semibold text-slate-700">This Week Recap 🗓️</p>
+          <p className="text-xs text-slate-400">
+            {format(thisWeekStart, 'MMM d')} – {format(thisWeekEnd, 'MMM d')}
+          </p>
+        </div>
+        <div className="grid grid-cols-3 gap-3 text-center mb-3">
+          <div>
+            <p className="text-xl font-black text-emerald-600">{weekWorkouts.length}</p>
+            <p className="text-xs text-slate-400">🏋️ Workouts</p>
+          </div>
+          <div>
+            <p className="text-xl font-black text-blue-600">{weekSports.length}</p>
+            <p className="text-xs text-slate-400">⚽ Sports</p>
+          </div>
+          <div>
+            <p className="text-xl font-black text-amber-500">{weekQuickWins.length}</p>
+            <p className="text-xs text-slate-400">🌟 Quick Wins</p>
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500 border-t border-slate-50 pt-3">
+          <span>💪 {weekBwDays} BW day{weekBwDays === 1 ? '' : 's'}</span>
+          <span>📺 {weekEntertainmentMin}min entertainment</span>
+          <span>📰 {weekNewsMin}min news</span>
+          <span>🔒 {weekXyzMin}min XYZ</span>
+        </div>
+        {weekQuickWins.length > 0 && (
+          <div className="mt-3 pt-3 border-t border-slate-50 space-y-1">
+            {weekQuickWins.map(w => (
+              <p key={w.id} className="text-xs text-slate-600">🌟 {w.text}</p>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Summary cards */}
       <div className="grid grid-cols-2 gap-3">
