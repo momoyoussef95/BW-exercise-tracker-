@@ -72,6 +72,16 @@ export default function DashboardView({ workouts, bodyWeights, entries, sports =
 
   return (
     <div className="space-y-4">
+      {/* Reminder: the real fight */}
+      <div className="bg-violet-50 border border-violet-100 rounded-2xl p-4">
+        <p className="text-xs font-semibold text-violet-600 uppercase tracking-wide mb-1.5">Remember</p>
+        <p className="text-sm text-violet-700 leading-relaxed">
+          My hardest battles aren't physical, they're psychological: grief, guilt, loneliness,
+          and the fear of being a failure. The real fight happens in my own head, not out in
+          the world, so that's where I need to keep showing up.
+        </p>
+      </div>
+
       {/* Today at a Glance */}
       <div className="bg-white rounded-2xl p-4 shadow-sm">
         <p className="text-sm font-semibold text-slate-700 mb-3">Today at a Glance</p>
